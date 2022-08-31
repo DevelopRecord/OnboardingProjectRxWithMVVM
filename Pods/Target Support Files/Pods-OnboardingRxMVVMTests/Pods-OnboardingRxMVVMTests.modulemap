@@ -1,0 +1,6 @@
+framework module Pods_OnboardingRxMVVMTests {
+  umbrella header "Pods-OnboardingRxMVVMTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,6 @@
+framework module Pods_OnboardingRxMVVM {
+  umbrella header "Pods-OnboardingRxMVVM-umbrella.h"
+
+  export *
+  module * { export * }
+}
