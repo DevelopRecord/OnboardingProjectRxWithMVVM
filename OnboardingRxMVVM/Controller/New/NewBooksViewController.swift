@@ -16,6 +16,8 @@ class NewBooksViewController: UIBaseViewController {
     // MARK: - Properties
 
     typealias ViewModel = NewBooksViewModel
+    
+    var disposeBag: DisposeBag = DisposeBag()
 
     private var newBooks: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()

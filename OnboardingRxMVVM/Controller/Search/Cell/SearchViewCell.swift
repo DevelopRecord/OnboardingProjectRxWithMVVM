@@ -6,13 +6,16 @@
 //
 
 import UIKit
+import RxSwift
 
 class SearchViewCell: UIBaseCollectionViewCell {
-    
+
     // MARK: - Properties
-    
+
+    let disposeBag = DisposeBag()
+
     static let identifier = "SearchViewCell"
-    
+
     private lazy var infoImageView = UIView().then {
         $0.backgroundColor = .systemGray5
     }
@@ -21,7 +24,7 @@ class SearchViewCell: UIBaseCollectionViewCell {
         $0.backgroundColor = .systemGray4
     }
 
-    private lazy var linkButton = UIButton(type: .system).then {
+    lazy var linkButton = UIButton(type: .system).then {
         $0.setImage(UIImage(systemName: "safari"), for: .normal)
         $0.setTitleColor(.systemBlue, for: .normal)
     }
@@ -50,12 +53,11 @@ class SearchViewCell: UIBaseCollectionViewCell {
         $0.font = UIFont.systemFont(ofSize: 17)
         $0.textAlignment = .center
     }
-    
+
     // MARK: - Helpers
-    
+
     /// 데이터 셋업 메서드
     func setupRequest(with newBooks: Book) {
-//        address = newBooks.url
         guard let image = newBooks.image else { return }
         imageView.kf.setImage(with: URL(string: image))
         titleLabel.text = newBooks.title
@@ -63,7 +65,7 @@ class SearchViewCell: UIBaseCollectionViewCell {
         isbn13Label.text = newBooks.isbn13
         subtitleLabel.text = newBooks.isEmptySubtitle
     }
-    
+
     override func setupLayout() {
         infoImageView.layer.cornerRadius = 10
         infoImageView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
@@ -72,7 +74,7 @@ class SearchViewCell: UIBaseCollectionViewCell {
         infoTitleView.layer.cornerRadius = 10
         infoTitleView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
         infoTitleView.layer.masksToBounds = true
-        
+
         contentView.addSubviews(views: [infoImageView, infoTitleView])
         infoImageView.addSubviews(views: [imageView, linkButton])
         infoTitleView.addSubviews(views: [titleLabel, subtitleLabel, isbn13Label, priceLabel])
@@ -106,13 +108,13 @@ class SearchViewCell: UIBaseCollectionViewCell {
             $0.top.equalToSuperview().offset(4)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         subtitleLabel.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(titleLabel.snp.bottom).offset(5)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-        
+
         isbn13Label.snp.makeConstraints {
             $0.centerX.equalToSuperview()
             $0.top.equalTo(subtitleLabel.snp.bottom).offset(5)

@@ -16,10 +16,6 @@ import Then
 /// UIView를 상속하는 BaseView
 class UIBaseView: UIView {
     
-    // MARK: - Properties
-    
-    var disposeBag: DisposeBag = DisposeBag()
-    
     // MARK: - Lifecycle
     
     override init(frame: CGRect) {

@@ -43,4 +43,6 @@ struct Book: Codable {
     var isEmptySubtitle: String {
         return subtitle?.isEmpty ?? false ? "No Subtitle.." : subtitle ?? ""
     }
+    
+    
 }

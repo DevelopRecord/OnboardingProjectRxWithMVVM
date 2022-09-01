@@ -7,6 +7,8 @@
 //
 
 import UIKit
+import SafariServices
+
 import SnapKit
 import Then
 import RxSwift
@@ -14,17 +16,19 @@ import RxCocoa
 
 class SearchView: UIBaseView {
 
-    // MARK: - Model type implemente
-    typealias Model = Void
+    var disposeBag: DisposeBag = DisposeBag()
 
+    /// 온보딩, 서치 상태 관찰 프로퍼티
     private var mode: BehaviorRelay<Mode> = BehaviorRelay<Mode>(value: .onboarding)
+
+    /// 사용자의 액션을 담는 데이터 요청 트리거
+    private var action: PublishRelay<SearchTriggerType> = PublishRelay<SearchTriggerType>()
 
     // MARK: - View
 
     lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout()).then {
         $0.backgroundColor = .clear
         $0.keyboardDismissMode = .onDrag
-        
         $0.register(SearchViewCell.self, forCellWithReuseIdentifier: SearchViewCell.identifier)
         $0.register(SearchResultsCell.self, forCellWithReuseIdentifier: SearchResultsCell.identifier)
         $0.register(LoadingCell.self, forCellWithReuseIdentifier: LoadingCell.identifier)
@@ -35,7 +39,7 @@ class SearchView: UIBaseView {
         $0.searchBar.placeholder = R.SearchViewTextMessage.enterSearchQuery
         $0.obscuresBackgroundDuringPresentation = false
         $0.becomeFirstResponder()
-        $0.delegate = self
+        $0.searchResultsUpdater = self
     }
 
     // MARK: - Methods
@@ -48,71 +52,104 @@ class SearchView: UIBaseView {
     }
 
     // MARK: - Dependency Injection
+    /// 컬렉션뷰에 바인딩
+    @discardableResult
+    func setupDI(book: Observable<[Book]>) -> Self {
+        self.mode.subscribe(onNext: { [weak self] state in
+            guard let `self` = self else { return }
+            self.collectionView.delegate = nil
+            self.collectionView.dataSource = nil
+            self.collectionView.rx.setDelegate(self).disposed(by: self.disposeBag)
 
-    func setupDI<T>(observable: Observable<T>) -> Self {
-        if let books = observable as? Observable<[Book]> {
-            // TODO: 여기서 분기처리해서 온보딩 상태의 셀과 서치 상태의 셀을 구분해서 보여줘야하는데 어떻게 할까 그걸
-            books.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
+            book.bind(to: self.collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
                 guard let `self` = self else { return UICollectionViewCell() }
-                if self.mode.value == .onboarding {
+
+                if state == .onboarding {
+                    /// 온보딩 셀로 보여줌
                     let searchViewCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchViewCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchViewCell ?? SearchViewCell()
+                    searchViewCell.linkButton.rx.tap
+                        .map { _ in
+                        print(book.title, book.url)
+                        return SearchTriggerType.presentSafari(book.url)
+                    }
+                        .bind(to: self.action)
+                        .disposed(by: searchViewCell.disposeBag)
                     searchViewCell.setupRequest(with: book)
                     return searchViewCell
                 } else {
+                    /// 서치 셀로 보여줌
+                    print("서치 책정보22: \(book.title)")
+                    if self.mode.value == .search && book.title == "" {
+                        collectionView.backgroundView = SearchPlaceholderView()
+                    }
                     let searchResultsCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchResultsCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchResultsCell ?? SearchResultsCell()
                     searchResultsCell.setupRequest(with: book)
+                    print("서치 책정보2: \(book)")
                     return searchResultsCell
                 }
-            }.disposed(by: disposeBag)
-        } else {
-            NSLog("Occured error in Search DI")
-        }
+            }.disposed(by: self.disposeBag)
+
+        }).disposed(by: disposeBag)
 
         return self
     }
 
-    /// @discardableResult를 명시해 Xcode 경고 피함
-    @discardableResult
+    /// @discardableResult를 명시해 버릴수 있다고 알리고 Xcode 경고 피함
     /// 사용자의 인터랙션
-    func setupDI<T>(genericT: PublishRelay<T>) -> Self {
-        if let searchQuery = genericT as? PublishRelay<SearchTriggerType> {
-            searchController.searchBar.rx.text
-                .orEmpty
-                .debounce(.milliseconds(500), scheduler: MainScheduler.instance)
-                .distinctUntilChanged()
-                .map { .searchQuery($0) }
-                .bind(to: searchQuery)
-                .disposed(by: disposeBag)
+    @discardableResult
+    func setupDI(action: PublishRelay<SearchTriggerType>) -> Self {
+        searchController.searchBar.rx.text
+            .orEmpty
+            .debounce(.milliseconds(500), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .map { .searchQuery($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
 
-            collectionView.rx.modelSelected(Book.self)
-                .map { .selectedBook($0) }
-                .bind(to: searchQuery)
-                .disposed(by: disposeBag)
-        } else {
-            NSLog("Occured error in Search DI")
-        }
+        collectionView.rx.modelSelected(Book.self)
+            .map { .selectedBook($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
 
+        mode
+            .distinctUntilChanged()
+            .map { .modeState($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+
+        return self
+    }
+
+    /// 사파리 유저 액션
+    @discardableResult
+    func setupDI(relay: PublishRelay<SearchTriggerType>) -> Self {
+        action.bind(to: relay).disposed(by: disposeBag)
         return self
     }
 }
 
-/*
- 
- self.searchBooks.asObservable()
-     .bind(to: self.subView.collectionView.rx.items) { collectionView, index, book -> UICollectionViewCell in
-         
-         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchResultsCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchResultsCell ?? SearchResultsCell()
-         cell.setupRequest(with: book)
-         return cell
- }.disposed(by: self.disposeBag)
- */
+extension SearchView: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        if searchController.isActive {
+            mode.accept(.search)
+        } else if !searchController.isActive {
+            mode.accept(.onboarding)
+        }
+    }
+}
 
-extension SearchView: UISearchControllerDelegate {
-    func willPresentSearchController(_ searchController: UISearchController) {
-        mode.accept(.search)
+extension SearchView: UICollectionViewDelegateFlowLayout {
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        if indexPath.section == 0 {
+            let result = mode.value == .onboarding ? CGSize(width: frame.width, height: 255) : CGSize(width: frame.width, height: 160)
+            return result
+        } else {
+            return CGSize(width: frame.width, height: 75)
+        }
     }
 
-    func willDismissSearchController(_ searchController: UISearchController) {
-        mode.accept(.onboarding)
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return UIEdgeInsets(top: 20, left: 0, bottom: 0, right: 0)
     }
 }

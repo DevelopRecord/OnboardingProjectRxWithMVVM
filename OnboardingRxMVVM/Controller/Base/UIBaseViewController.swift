@@ -14,10 +14,6 @@ import Then
 
 class UIBaseViewController: UIViewController {
     
-    // MARK: - Properties
-    
-    var disposeBag: DisposeBag = DisposeBag()
-    
     // MARK: - Lifecycle
     
     override func viewDidLoad() {

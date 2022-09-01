@@ -7,6 +7,7 @@
 //
 
 import UIKit
+
 import RxCocoa
 import RxSwift
 
@@ -16,6 +17,17 @@ enum SearchTriggerType {
     /// 책 선택
     case selectedBook(Book)
     case modeState(Mode)
+    case presentSafari(String?)
+
+    /// 원시값 대신 사용하기 위함. 연관값과 원시값을 동시에 사용할 수 없기때문에.
+    var index: Int {
+        switch self {
+        case .searchQuery(_): return 0
+        case .selectedBook(_): return 1
+        case .modeState(_): return 2
+        case .presentSafari(_): return 3
+        }
+    }
 }
 
 enum Mode {
@@ -28,19 +40,20 @@ enum Mode {
 class SearchViewModel: ViewModelType {
 
     // MARK: - ViewModelType Protocol
+
     typealias ViewModel = SearchViewModel
 
     private var disposeBag: DisposeBag = DisposeBag()
-    
+
     /// collectionView에 뿌려줄 데이터 리스트
     private var booksRelay: PublishRelay<[Book]> = PublishRelay<[Book]>()
     private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
-    
+
     /// Paging 처리에 필요한 전역 프로퍼티
     private var page: Int = 1
-    
+
     let modeState = BehaviorRelay<Mode>(value: .onboarding)
-    
+
     private let apiService: APIService
 
     init(apiService: APIService) {
@@ -61,7 +74,7 @@ class SearchViewModel: ViewModelType {
         req.viewDidLoaded
             .subscribe(onNext: fetchNewBooks)
             .disposed(by: disposeBag)
-        
+
         req.action
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)
@@ -74,11 +87,19 @@ class SearchViewModel: ViewModelType {
         case .searchQuery(let query):
             self.fetchSearchBooks(query)
         case .selectedBook(let book):
-            if let isbn = book.isbn13 {
-                self.fetchDetailBook(isbn)
+            if let isbn13 = book.isbn13 {
+                self.fetchDetailBook(isbn13)
             }
         case .modeState(let state):
+            print("모드 상태: \(state)")
+            if state == .onboarding {
+                self.fetchNewBooks()
+            } else {
+                self.fetchSearchBooks("")
+            }
             modeState.accept(state)
+        default:
+            break
         }
     }
 }
@@ -107,15 +128,16 @@ extension SearchViewModel {
             guard let `self` = self else { return }
             switch state {
             case .success(let response):
+                // book에 모드값 판별해서
                 if let book = response.books {
                     guard let page = response.page else { return }
                     self.page = Int(page) ?? 1
                     self.booksRelay.accept(book)
                 } else {
-                    print("검색결과 없음")
+                    print(R.SearchViewTextMessage.failListMessage)
                     self.booksRelay.accept([])
                 }
-                
+
             case .failure(_):
                 print(R.SearchViewTextMessage.noSearchRequestMessage)
             }
@@ -125,7 +147,7 @@ extension SearchViewModel {
     private func fetchDetailBook(_ isbn13: String?) {
         guard let isbn13 = isbn13 else { return }
         let result: Single<Book> = self.apiService.fetchDetailBook(isbn13: isbn13)
-        
+
         result
             .subscribe { [weak self] state in
             guard let `self` = self else { return }
