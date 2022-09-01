@@ -116,7 +116,7 @@ extension SearchViewModel {
                     self.booksRelay.accept(books)
                 }
             case .failure(_):
-                print(R.SearchViewTextMessage.failListMessage)
+                Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
             }
         }.disposed(by: disposeBag)
     }
@@ -128,18 +128,17 @@ extension SearchViewModel {
             guard let `self` = self else { return }
             switch state {
             case .success(let response):
-                // book에 모드값 판별해서
                 if let book = response.books {
                     guard let page = response.page else { return }
                     self.page = Int(page) ?? 1
                     self.booksRelay.accept(book)
                 } else {
-                    print(R.SearchViewTextMessage.failListMessage)
+                    Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
                     self.booksRelay.accept([])
                 }
 
             case .failure(_):
-                print(R.SearchViewTextMessage.noSearchRequestMessage)
+                Toast.shared.showToast(R.SearchViewTextMessage.noSearchRequestMessage)
             }
         }.disposed(by: disposeBag)
     }
@@ -155,7 +154,7 @@ extension SearchViewModel {
             case .success(let book):
                 self.detailBookRelay.accept(book)
             case .failure(_):
-                print(R.SearchViewTextMessage.failDetailMessage)
+                Toast.shared.showToast(R.SearchViewTextMessage.failDetailMessage)
             }
         }.disposed(by: disposeBag)
     }

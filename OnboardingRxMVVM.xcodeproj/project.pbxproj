@@ -42,6 +42,7 @@
 		C35FB71228B60531000B1DCC /* DetailBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB70F28B60531000B1DCC /* DetailBookView.swift */; };
 		C35FB71328B60531000B1DCC /* DetailBookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */; };
 		C35FB71528B606FE000B1DCC /* SearchPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */; };
+		C3BAF85C28C07FA700808822 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BAF85B28C07FA700808822 /* Toast.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +105,7 @@
 		C35FB70F28B60531000B1DCC /* DetailBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailBookView.swift; sourceTree = "<group>"; };
 		C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailBookViewModel.swift; sourceTree = "<group>"; };
 		C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPlaceholderView.swift; sourceTree = "<group>"; };
+		C3BAF85B28C07FA700808822 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		D3A461D78C8855F8F6A08DF9 /* Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5881E8C62CA09A1613D8170 /* Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; sourceTree = "<group>"; };
 		EAD2B176E4116E54385E8821 /* Pods-OnboardingRxMVVMTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVMTests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVMTests/Pods-OnboardingRxMVVMTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -163,6 +165,7 @@
 		C3396B6328B7689D00A93662 /* Commons */ = {
 			isa = PBXGroup;
 			children = (
+				C3BAF85A28C07FA000808822 /* Toast */,
 				C35FB6E128B5E014000B1DCC /* Resources */,
 				C35FB6DE28B5AB8A000B1DCC /* Protocol */,
 				C3396B6428B768A900A93662 /* Extensions+ */,
@@ -362,6 +365,14 @@
 				C35FB70028B5F87C000B1DCC /* UIView+.swift */,
 			);
 			path = "UIViewController+";
+			sourceTree = "<group>";
+		};
+		C3BAF85A28C07FA000808822 /* Toast */ = {
+			isa = PBXGroup;
+			children = (
+				C3BAF85B28C07FA700808822 /* Toast.swift */,
+			);
+			path = Toast;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -619,6 +630,7 @@
 				C35FB6DB28B5AADF000B1DCC /* APIService.swift in Sources */,
 				C35FB69628B4D654000B1DCC /* AppDelegate.swift in Sources */,
 				C35FB71128B60531000B1DCC /* DetailBookViewController.swift in Sources */,
+				C3BAF85C28C07FA700808822 /* Toast.swift in Sources */,
 				C35FB6F328B5EAA1000B1DCC /* NewBooksViewModel.swift in Sources */,
 				C35FB69828B4D654000B1DCC /* SceneDelegate.swift in Sources */,
 				C35FB71228B60531000B1DCC /* DetailBookView.swift in Sources */,

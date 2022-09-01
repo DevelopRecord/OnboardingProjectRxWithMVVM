@@ -11,8 +11,15 @@ import RxCocoa
 import RxSwift
 
 enum NewBooksTriggerType {
-    case viewLoadedTrigger
-    case selectedBookTrigger
+    case selectedBook(Book)
+    case presentSafari(String?)
+    
+    var index: Int {
+        switch self {
+        case .selectedBook(_): return 0
+        case .presentSafari(_): return 1
+        }
+    }
 }
 
 class NewBooksViewModel: ViewModelType {
@@ -22,9 +29,8 @@ class NewBooksViewModel: ViewModelType {
     typealias ViewModel = NewBooksViewModel
 
     private var disposeBag: DisposeBag = DisposeBag()
-    private var newBookRelay: PublishRelay<BookResponse> = PublishRelay<BookResponse>()
-    private var selectedBook: PublishRelay<Book> = PublishRelay<Book>()
-    private var isbn13: String = String()
+    private var booksRelay: PublishRelay<[Book]> = PublishRelay<[Book]>()
+    private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
 
     private let apiService: APIService
 
@@ -33,54 +39,67 @@ class NewBooksViewModel: ViewModelType {
     }
 
     struct Input {
-        let actionTrigger: PublishRelay<Void>
-
-        /// 나중에 Input 액션 리팩토링 할 때 사용
-//        let action: Observable<NewBooksTriggerType>
+        let viewDidLoaded: Observable<Void>
+        let action: PublishRelay<NewBooksTriggerType>
     }
 
     struct Output {
-        let newBookRelay: PublishRelay<BookResponse>
+        let booksRelay: Observable<[Book]>
+        let detailBookRelay: PublishRelay<Book>
     }
 
     func transform(req: ViewModel.Input) -> ViewModel.Output {
-        req.actionTrigger
-            .subscribe(onNext: { [weak self] _ in
-                guard let `self` = self else { return }
-                self.fetchNewBooks()
-        }).disposed(by: disposeBag)
+        req.viewDidLoaded
+            .subscribe(onNext: fetchNewBooks)
+            .disposed(by: disposeBag)
 
-        return Output(newBookRelay: newBookRelay)
+        req.action
+            .subscribe(onNext: actionTriggerRequest)
+            .disposed(by: disposeBag)
+
+        return Output(booksRelay: booksRelay.asObservable(), detailBookRelay: detailBookRelay)
     }
 
     func actionTriggerRequest(action: NewBooksTriggerType) {
         switch action {
-        case .viewLoadedTrigger:
-            self.fetchNewBooks()
-        case .selectedBookTrigger:
-            self.fetchDetailBook()
+        case .selectedBook(let book):
+            if let isbn13 = book.isbn13 {
+                self.fetchDetailBook(isbn13: isbn13)
+            }
+        default:
+            break
         }
     }
 }
 
 extension NewBooksViewModel {
     private func fetchNewBooks() {
-        self.apiService.fetchNewBooks()
-            .subscribe(onSuccess: { [weak self] response in
-                guard let `self` = self else { return }
-                self.newBookRelay.accept(response)
-        }, onFailure: { error in
-                print(R.NewBooksTextMessage.failListMessage)
-            }).disposed(by: disposeBag)
+        let result: Single<BookResponse> = self.apiService.fetchNewBooks()
+
+        result.subscribe({ [weak self] state in
+            guard let `self` = self else { return }
+            switch state {
+            case .success(let bookResponse):
+                if let book = bookResponse.books {
+                    self.booksRelay.accept(book)
+                }
+            case .failure(_):
+                Toast.shared.showToast(R.NewBooksTextMessage.failListMessage)
+            }
+        }).disposed(by: disposeBag)
     }
 
-    private func fetchDetailBook() {
-        self.apiService.fetchDetailBook(isbn13: isbn13)
-            .subscribe(onSuccess: { [weak self] response in
-                guard let `self` = self else { return }
-                self.selectedBook.accept(response)
-        }, onFailure: { error in
-                print(R.NewBooksTextMessage.failDetailMessage)
-            }).disposed(by: disposeBag)
+    private func fetchDetailBook(isbn13: String?) {
+        guard let isbn13 = isbn13 else { return }
+        let result: Single<Book> = self.apiService.fetchDetailBook(isbn13: isbn13)
+
+        result.subscribe({ [weak self] state in
+            switch state {
+            case .success(let book):
+                self?.detailBookRelay.accept(book)
+            case .failure(_):
+                Toast.shared.showToast(R.NewBooksTextMessage.failDetailMessage)
+            }
+        }).disposed(by: disposeBag)
     }
 }

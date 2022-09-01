@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 
 class NewBooksCell: UIBaseCollectionViewCell {
 
@@ -13,19 +14,19 @@ class NewBooksCell: UIBaseCollectionViewCell {
     
     static let identifier = "UIBaseCollectionViewCell"
     
+    var disposeBag: DisposeBag = DisposeBag()
+    
     private lazy var infoImageView = UIView().then {
         $0.backgroundColor = .systemGray5
     }
 
-    private lazy var infoTitleView = UIView().then {
+    let infoTitleView = UIView().then {
         $0.backgroundColor = .systemGray4
     }
 
-    // TODO: let 으로 선언하면 addTarget이 작동하지 않음. lazy var로 하니 동작함 왜그런가? -> 프로퍼티가 생성되고 나서 addTarget값이 설정됨
-    private lazy var linkButton = UIButton(type: .system).then {
+    lazy var linkButton = UIButton(type: .system).then {
         $0.setImage(UIImage(systemName: "safari"), for: .normal)
         $0.setTitleColor(.systemBlue, for: .normal)
-        $0.addTarget(self, action: #selector(handleLink), for: .touchUpInside)
     }
 
     private lazy var imageView = UIImageView().then {
@@ -38,7 +39,7 @@ class NewBooksCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
 
-    private let subtitleLabel = UILabel().then {
+    let subtitleLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
         $0.textAlignment = .center
     }
@@ -56,10 +57,9 @@ class NewBooksCell: UIBaseCollectionViewCell {
     // MARK: - Helpers
     
     func setupRequest(with newBooks: Book) {
-//        address = newBooks.url
         imageView.kf.setImage(with: URL(string: newBooks.image ?? ""))
         titleLabel.text = newBooks.title
-        subtitleLabel.text = newBooks.isEmptySubtitle
+        subtitleLabel.text = newBooks.subtitle
         priceLabel.text = newBooks.exchangeRateCurrencyKR
         isbn13Label.text = newBooks.isbn13
     }
@@ -125,11 +125,5 @@ class NewBooksCell: UIBaseCollectionViewCell {
             $0.top.equalTo(isbn13Label.snp.bottom).offset(5)
             $0.leading.trailing.equalToSuperview().inset(20)
         }
-    }
-    
-    // MARK: - Selectors
-    
-    @objc func handleLink() {
-        
     }
 }

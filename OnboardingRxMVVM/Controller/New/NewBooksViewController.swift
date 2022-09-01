@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import SafariServices
+
 import SnapKit
 import Then
 import RxSwift
@@ -16,12 +18,12 @@ class NewBooksViewController: UIBaseViewController {
     // MARK: - Properties
 
     typealias ViewModel = NewBooksViewModel
-    
+
     var disposeBag: DisposeBag = DisposeBag()
 
     private var newBooks: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
-    let actionTrigger = PublishRelay<NewBooksTriggerType>()
+    let action = PublishRelay<NewBooksTriggerType>()
 
     // MARK: - ViewModelProtocol
 
@@ -34,38 +36,34 @@ class NewBooksViewController: UIBaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
-
         bindingViewModel()
-    }
-
-    // MARK: - Binding
-
-    func bindingViewModel() {
-        subView.collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-
-        let response = viewModel.transform(req: ViewModel.Input(actionTrigger: requestTrigger))
-        response.newBookRelay
-            .subscribe(onNext: { [weak self] bookResponse in
-            guard let `self` = self else { return }
-            UIView.transition(with: self.subView.collectionView, duration: 0.5, options: .transitionCrossDissolve) {
-                self.newBooks.accept(bookResponse.books ?? [])
-            }
-        }).disposed(by: disposeBag)
-
-        self.newBooks.asDriver()
-            .drive(subView.collectionView.rx.items(cellIdentifier: NewBooksCell.identifier, cellType: NewBooksCell.self)) { index, book, cell in
-                cell.setupRequest(with: book)
-        }.disposed(by: disposeBag)
-
-        subView.collectionView.rx.modelSelected(Book.self)
-            .subscribe(onNext: { [weak self] model in
-                guard let `self` = self else { return }
-                let controller = DetailBookViewController()
-                controller.setupRequest(with: model)
-                self.navigationController?.pushViewController(controller, animated: true)
-            }).disposed(by: disposeBag)
 
         requestTrigger.accept(())
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        urlBinding()
+    }
+    
+    // MARK: - Binding
+    
+    func bindingViewModel() {
+        let response = viewModel.transform(req: ViewModel.Input(viewDidLoaded: requestTrigger.asObservable(),
+                                                                action: action))
+
+        subView
+            .setupDI(book: response.booksRelay)
+            .setupDI(action: action)
+            .setupDI(relay: action)
+
+        response.detailBookRelay
+            .subscribe(onNext: { [weak self] book in
+                guard let `self` = self else { return }
+                let controller = DetailBookViewController()
+                controller.setupRequest(with: book)
+                self.navigationController?.pushViewController(controller, animated: true)
+            }).disposed(by: disposeBag)
     }
 
     // MARK: - Helpers
@@ -79,10 +77,23 @@ class NewBooksViewController: UIBaseViewController {
             $0.edges.equalToSuperview()
         }
     }
-}
 
-extension NewBooksViewController: UICollectionViewDelegateFlowLayout {
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        return CGSize(width: view.frame.width, height: 265)
+    func urlBinding() {
+        action
+            .filter { $0.index == 1 }
+            .subscribe(onNext: { [weak self] in
+                guard let `self` = self else { return }
+                switch $0 {
+                case .presentSafari(let urlString):
+                    guard let urlString = urlString, let url = URL(string: urlString) else { return }
+                    print("URL: \(url)")
+                    let safariViewController = SFSafariViewController(url: url)
+                    self.present(safariViewController, animated: true)
+                default:
+                    break
+                }
+            }).disposed(by: disposeBag)
     }
 }
+
+// UIView.transition(with: self.subView.collectionView, duration: 0.5, options: .transitionCrossDissolve) {}

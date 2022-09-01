@@ -69,6 +69,7 @@ class SearchViewController: UIBaseViewController {
     }
 
     // MARK: - View
+    
     let subView = SearchView()
 
     override func setupLayout() {
@@ -83,16 +84,6 @@ class SearchViewController: UIBaseViewController {
 
     /// 사파리 이동하기 위한 데이터 바인딩 메서드
     func urlBinding() {
-        //        actionTriggers
-        //            .subscribe(onNext: { [weak self] in
-        //                guard let `self` = self else { return }
-        //                if case SearchTriggerType.presentSafari(let urlString) = $0 {
-        //                    guard let urlString = urlString, let url = URL(string: urlString) else { return }
-        //                    let safariViewController = SFSafariViewController(url: url)
-        //                    self.present(safariViewController, animated: true)
-        //                }
-        //            }).disposed(by: disposeBag)
-
         actionTriggers
             .filter { $0.index == 3 }
             .subscribe(onNext: { [weak self] in
@@ -108,3 +99,15 @@ class SearchViewController: UIBaseViewController {
         }).disposed(by: disposeBag)
     }
 }
+
+/*
+ //        actionTriggers
+ //            .subscribe(onNext: { [weak self] in
+ //                guard let `self` = self else { return }
+ //                if case SearchTriggerType.presentSafari(let urlString) = $0 {
+ //                    guard let urlString = urlString, let url = URL(string: urlString) else { return }
+ //                    let safariViewController = SFSafariViewController(url: url)
+ //                    self.present(safariViewController, animated: true)
+ //                }
+ //            }).disposed(by: disposeBag)
+ */

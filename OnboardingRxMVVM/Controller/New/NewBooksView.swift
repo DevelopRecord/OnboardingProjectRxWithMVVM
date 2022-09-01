@@ -15,20 +15,23 @@ import RxCocoa
 class NewBooksView: UIBaseView {
 
     // MARK: - Properties
-    
-    private var newBooks: BookResponse?
-    
+
+    var disposeBag = DisposeBag()
+
+    /// 사용자의 액션을 담는 데이터 요청 트리거
+    private var action: PublishRelay<NewBooksTriggerType> = PublishRelay<NewBooksTriggerType>()
+
     lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout()).then {
         $0.backgroundColor = .clear
         $0.register(NewBooksCell.self, forCellWithReuseIdentifier: NewBooksCell.identifier)
     }
-    
+
     // MARK: - Model type implemente
 
     typealias Model = Void
 
     // MARK: - Methods
-    
+
     override func setupLayout() {
         backgroundColor = .clear
 
@@ -36,5 +39,46 @@ class NewBooksView: UIBaseView {
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+    }
+
+    @discardableResult
+    func setupDI(book: Observable<[Book]>) -> Self {
+        collectionView.rx.setDelegate(self).disposed(by: disposeBag)
+        book.bind(to: collectionView.rx.items) { collectionView, index, book -> UICollectionViewCell in
+            let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
+            newBooksCell.setupRequest(with: book)
+
+            newBooksCell.linkButton.rx.tap
+                .map { _ in
+                    print(book.title, book.url)
+                    return NewBooksTriggerType.presentSafari(book.url)
+                }
+                .bind(to: self.action)
+                .disposed(by: newBooksCell.disposeBag)
+            return newBooksCell
+        }.disposed(by: disposeBag)
+        return self
+    }
+
+    @discardableResult
+    func setupDI(action: PublishRelay<NewBooksTriggerType>) -> Self {
+        collectionView.rx.modelSelected(Book.self)
+            .map { .selectedBook($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        return self
+    }
+
+    /// 사파리 유저 액션
+    @discardableResult
+    func setupDI(relay: PublishRelay<NewBooksTriggerType>) -> Self {
+        action.bind(to: relay).disposed(by: disposeBag)
+        return self
+    }
+}
+
+extension NewBooksView: UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: frame.width, height: 265)
     }
 }
