@@ -16,8 +16,12 @@ enum SearchTriggerType {
     case searchQuery(String)
     /// 책 선택
     case selectedBook(Book)
+    /// 모드 상태
     case modeState(Mode)
+    /// 사파리 URL 주소
     case presentSafari(String?)
+    /// 더보기
+    case isLoadMore(Bool)
 
     /// 원시값 대신 사용하기 위함. 연관값과 원시값을 동시에 사용할 수 없기때문에.
     var index: Int {
@@ -26,6 +30,7 @@ enum SearchTriggerType {
         case .selectedBook(_): return 1
         case .modeState(_): return 2
         case .presentSafari(_): return 3
+        case .isLoadMore(_): return 4
         }
     }
 }
@@ -46,11 +51,15 @@ class SearchViewModel: ViewModelType {
     private var disposeBag: DisposeBag = DisposeBag()
 
     /// collectionView에 뿌려줄 데이터 리스트
-    private var booksRelay: PublishRelay<[Book]> = PublishRelay<[Book]>()
+    private var booksRelay: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
     private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
 
     /// Paging 처리에 필요한 전역 프로퍼티
-    private var page: Int = 1
+    private var page = BehaviorRelay<Int>(value: 1)
+    private var endPage: Int = 0
+    private var query = BehaviorRelay<String>(value: "")
+    private var moreBooksList: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
+    private var isLoadMore: BehaviorRelay<Bool> = BehaviorRelay<Bool>(value: false)
 
     let modeState = BehaviorRelay<Mode>(value: .onboarding)
 
@@ -85,28 +94,50 @@ class SearchViewModel: ViewModelType {
     func actionTriggerRequest(trigger: SearchTriggerType) {
         switch trigger {
         case .searchQuery(let query):
-            self.fetchSearchBooks(query)
+            self.query.accept(query)
+            if !self.query.value.isEmpty {
+                fetchSearchBooks(self.query.value, page: page.value)
+            }
         case .selectedBook(let book):
             if let isbn13 = book.isbn13 {
-                self.fetchDetailBook(isbn13)
+                fetchDetailBook(isbn13)
             }
         case .modeState(let state):
-            print("모드 상태: \(state)")
+            print("상태: \(state)")
             if state == .onboarding {
-                self.fetchNewBooks()
-            } else {
-                self.fetchSearchBooks("")
+                booksRelay.accept([])
+                fetchNewBooks()
+            } else if state == .search {
+                if query.value.isEmpty {
+                    booksRelay.accept([])
+                } else {
+                    fetchSearchBooks(query.value, page: page.value)
+                }
             }
             modeState.accept(state)
-        default:
-            break
+        case .isLoadMore(let state):
+            let value = page.value // 1
+            self.isLoadMore.accept(state)
+            
+            if isLoadMore.value {
+                isLoadMore.accept(false)
+                if 1 <= page.value && page.value < endPage {
+                    page.accept(value + 1)
+                    fetchSearchBooks(query.value, page: page.value)
+                    isLoadMore.accept(true)
+                } else if page.value == endPage {
+                    print("마지막, page2: \(page.value)")
+                }
+            }
+        case .presentSafari(let urlString):
+            print("URL: \(urlString)")
         }
     }
 }
 
 extension SearchViewModel {
     private func fetchNewBooks() {
-        let result: Single<BookResponse> = self.apiService.fetchNewBooks()
+        let result: Single<BookResponse> = apiService.fetchNewBooks()
 
         result.subscribe { [weak self] state in
             guard let `self` = self else { return }
@@ -121,17 +152,32 @@ extension SearchViewModel {
         }.disposed(by: disposeBag)
     }
 
-    private func fetchSearchBooks(_ query: String) {
-        let result: Single<BookResponse> = self.apiService.fetchSearchBooks(query: query, page: page)
+    private func fetchSearchBooks(_ query: String, page: Int) {
+        let result: Single<BookResponse> = apiService.fetchSearchBooks(query: query, page: page)
 
         result.subscribe { [weak self] state in
             guard let `self` = self else { return }
             switch state {
             case .success(let response):
                 if let book = response.books {
-                    guard let page = response.page else { return }
-                    self.page = Int(page) ?? 1
-                    self.booksRelay.accept(book)
+                    /// 책 리스트 개수
+                    guard let total = response.total else { return }
+                    /// 마지막 페이지
+                    let endPage = self.getEndPage(total)
+                    self.endPage = endPage
+
+                    if 1 <= self.page.value && self.page.value < endPage {
+                        var booksValue = self.booksRelay.value
+                        print("카운트: \(booksValue.count)")
+                        self.moreBooksList.accept(book)
+                        booksValue.append(contentsOf: self.moreBooksList.value)
+                        self.booksRelay.accept(booksValue)
+
+                    } else if self.page.value == endPage {
+                        print("마지막 페이지")
+                    }
+
+                    print("페이지: \(self.page.value), 토탈카운트: \(response.total), 끝페이지: \(endPage)")
                 } else {
                     Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
                     self.booksRelay.accept([])
@@ -145,7 +191,7 @@ extension SearchViewModel {
 
     private func fetchDetailBook(_ isbn13: String?) {
         guard let isbn13 = isbn13 else { return }
-        let result: Single<Book> = self.apiService.fetchDetailBook(isbn13: isbn13)
+        let result: Single<Book> = apiService.fetchDetailBook(isbn13: isbn13)
 
         result
             .subscribe { [weak self] state in
@@ -157,5 +203,10 @@ extension SearchViewModel {
                 Toast.shared.showToast(R.SearchViewTextMessage.failDetailMessage)
             }
         }.disposed(by: disposeBag)
+    }
+
+    /// endPage를 구하기 위한 메서드
+    private func getEndPage(_ total: String) -> Int {
+        return Int(ceil(Double(total)! / 10.0))
     }
 }

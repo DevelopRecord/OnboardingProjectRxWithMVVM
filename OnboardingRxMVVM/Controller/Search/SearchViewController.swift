@@ -30,21 +30,16 @@ class SearchViewController: UIBaseViewController {
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
     /// 사용자의 액션을 담는 데이터 요청 트리거
     private var actionTriggers: PublishRelay<SearchTriggerType> = PublishRelay<SearchTriggerType>()
-    /// 검색한 책 리스트
-    private var searchBooks: PublishRelay<[Book]> = PublishRelay<[Book]>()
+    
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
+//        urlBinding()
 
         requestTrigger.accept(())
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        urlBinding()
     }
 
     // MARK: - Binding
@@ -98,16 +93,10 @@ class SearchViewController: UIBaseViewController {
             }
         }).disposed(by: disposeBag)
     }
+    
+//    func urlBinding2() {
+//        actionTriggers
+//            .filter { $0.index == 3 }
+//            .bind(to: <#T##SearchTriggerType...##SearchTriggerType#>)
+//    }
 }
-
-/*
- //        actionTriggers
- //            .subscribe(onNext: { [weak self] in
- //                guard let `self` = self else { return }
- //                if case SearchTriggerType.presentSafari(let urlString) = $0 {
- //                    guard let urlString = urlString, let url = URL(string: urlString) else { return }
- //                    let safariViewController = SFSafariViewController(url: url)
- //                    self.present(safariViewController, animated: true)
- //                }
- //            }).disposed(by: disposeBag)
- */

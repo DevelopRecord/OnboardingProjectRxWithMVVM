@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import RxRelay
 
 class SearchViewCell: UIBaseCollectionViewCell {
 
@@ -54,7 +55,18 @@ class SearchViewCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
 
+    deinit {
+        print("searchviewcell deinit")
+    }
+    
     // MARK: - Helpers
+    
+    func setupDI(action: PublishRelay<SearchTriggerType>, urlString: String?) {
+        linkButton.rx.tap
+            .map { .presentSafari(urlString) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+    }
 
     /// 데이터 셋업 메서드
     func setupRequest(with newBooks: Book) {

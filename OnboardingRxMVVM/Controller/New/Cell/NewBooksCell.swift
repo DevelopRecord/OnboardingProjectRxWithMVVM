@@ -54,6 +54,10 @@ class NewBooksCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
     
+    deinit {
+        print("newbook deinit")
+    }
+    
     // MARK: - Helpers
     
     func setupRequest(with newBooks: Book) {
