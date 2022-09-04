@@ -44,5 +44,8 @@ struct Book: Codable {
         return subtitle?.isEmpty ?? false ? "No Subtitle.." : subtitle ?? ""
     }
     
+//    func mapping(_ mode: Mode) -> Book {
+//        return Book(title: self.title, subtitle: self.subtitle, isbn13: self.isbn13, price: nil, image: nil, url: nil, mode: mode)
+//    }
     
 }
