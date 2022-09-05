@@ -62,10 +62,8 @@ class NewBooksViewModel: ViewModelType {
 
     func actionTriggerRequest(action: NewBooksTriggerType) {
         switch action {
-        case .selectedBook(let book):
-            if let isbn13 = book.isbn13 {
-                self.fetchDetailBook(isbn13: isbn13)
-            }
+        case .selectedBook(_):
+            print("newBooksViewModel selectedBook")
         default:
             break
         }
@@ -85,20 +83,6 @@ extension NewBooksViewModel {
                 }
             case .failure(_):
                 Toast.shared.showToast(R.NewBooksTextMessage.failListMessage)
-            }
-        }).disposed(by: disposeBag)
-    }
-
-    private func fetchDetailBook(isbn13: String?) {
-        guard let isbn13 = isbn13 else { return }
-        let result: Single<Book> = self.apiService.fetchDetailBook(isbn13: isbn13)
-
-        result.subscribe({ [weak self] state in
-            switch state {
-            case .success(let book):
-                self?.detailBookRelay.accept(book)
-            case .failure(_):
-                Toast.shared.showToast(R.NewBooksTextMessage.failDetailMessage)
             }
         }).disposed(by: disposeBag)
     }

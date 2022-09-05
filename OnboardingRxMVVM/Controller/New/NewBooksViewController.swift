@@ -23,7 +23,7 @@ class NewBooksViewController: UIBaseViewController {
 
     private var newBooks: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
-    let action = PublishRelay<NewBooksTriggerType>()
+    let actionTriggers = PublishRelay<NewBooksTriggerType>()
 
     // MARK: - ViewModelProtocol
 
@@ -37,33 +37,29 @@ class NewBooksViewController: UIBaseViewController {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
+        urlBinding()
 
         requestTrigger.accept(())
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        urlBinding()
     }
     
     // MARK: - Binding
     
     func bindingViewModel() {
         let response = viewModel.transform(req: ViewModel.Input(viewDidLoaded: requestTrigger.asObservable(),
-                                                                action: action))
+                                                                action: actionTriggers))
 
         subView
             .setupDI(book: response.booksRelay)
-            .setupDI(action: action)
-            .setupDI(relay: action)
+            .setupDI(action: actionTriggers)
+            .setupDI(relay: actionTriggers)
 
-        response.detailBookRelay
-            .subscribe(onNext: { [weak self] book in
-                guard let `self` = self else { return }
-                let controller = DetailBookViewController()
-                controller.setupRequest(with: book)
-                self.navigationController?.pushViewController(controller, animated: true)
-            }).disposed(by: disposeBag)
+//        response.detailBookRelay
+//            .subscribe(onNext: { [weak self] book in
+//                guard let `self` = self else { return }
+//                let controller = DetailBookViewController()
+//                controller.setupRequest(with: book)
+//                self.navigationController?.pushViewController(controller, animated: true)
+//            }).disposed(by: disposeBag)
     }
 
     // MARK: - Helpers
@@ -79,7 +75,21 @@ class NewBooksViewController: UIBaseViewController {
     }
 
     func urlBinding() {
-        action
+        actionTriggers
+            .filter { $0.index == 0 }
+            .subscribe(onNext: { [weak self] in
+                guard let `self` = self else { return }
+                switch $0 {
+                case .selectedBook(let book):
+                    let controller = DetailBookViewController()
+                    controller.isbn13Relay.accept(book.isbn13)
+                    controller.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(controller, animated: true)
+                default: break
+                }
+            }).disposed(by: disposeBag)
+        
+        actionTriggers
             .filter { $0.index == 1 }
             .subscribe(onNext: { [weak self] in
                 guard let `self` = self else { return }
@@ -95,5 +105,3 @@ class NewBooksViewController: UIBaseViewController {
             }).disposed(by: disposeBag)
     }
 }
-
-// UIView.transition(with: self.subView.collectionView, duration: 0.5, options: .transitionCrossDissolve) {}

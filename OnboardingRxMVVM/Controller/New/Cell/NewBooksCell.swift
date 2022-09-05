@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 class NewBooksCell: UIBaseCollectionViewCell {
 
@@ -56,6 +57,15 @@ class NewBooksCell: UIBaseCollectionViewCell {
     
     deinit {
         print("newbook deinit")
+    }
+    
+    // MARK: - Dependency Injection
+    
+    func setupDI(action: PublishRelay<NewBooksTriggerType>, urlString: String?) {
+        linkButton.rx.tap
+            .map { .presentSafari(urlString) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Helpers

@@ -47,14 +47,7 @@ class NewBooksView: UIBaseView {
         book.bind(to: collectionView.rx.items) { collectionView, index, book -> UICollectionViewCell in
             let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
             newBooksCell.setupRequest(with: book)
-
-            newBooksCell.linkButton.rx.tap
-                .map { _ in
-                    print(book.title, book.url)
-                    return NewBooksTriggerType.presentSafari(book.url)
-                }
-                .bind(to: self.action)
-                .disposed(by: newBooksCell.disposeBag)
+            newBooksCell.setupDI(action: self.action, urlString: book.url)
             return newBooksCell
         }.disposed(by: disposeBag)
         return self
@@ -66,6 +59,11 @@ class NewBooksView: UIBaseView {
             .map { .selectedBook($0) }
             .bind(to: action)
             .disposed(by: disposeBag)
+        
+        self.action
+            .bind(to: action)
+            .disposed(by: disposeBag)
+
         return self
     }
 

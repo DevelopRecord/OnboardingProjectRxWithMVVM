@@ -16,34 +16,32 @@ class DetailBookViewController: UIBaseViewController {
     typealias ViewModel = DetailBookViewModel
 
     // MARK: - ViewModelProtocol
-    var viewModel: ViewModel!
+    var viewModel: ViewModel = DetailBookViewModel(apiService: APIService())
 
     // MARK: - Properties
+    
+    var disposeBag = DisposeBag()
+    private var actionTriggers: PublishRelay<Void> = PublishRelay<Void>()
+    
+    var book: BehaviorRelay<Book?> = BehaviorRelay<Book?>(value: nil)
+    var isbn13Relay: BehaviorRelay<String?> = BehaviorRelay<String?>(value: nil)
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
+        bindingViewModel()
         setupSubview()
         dismissKeyboardWhenTappedAround()
+        
+        actionTriggers.accept(())
     }
 
     // MARK: - Binding
     func bindingViewModel() {
-        _ = viewModel.transform(req: ViewModel.Input())
-    }
-    
-    /// 데이터 셋업 메서드
-    func setupRequest(with book: Book) {
-        let url = URL(string: book.image ?? "")
-        subView.isbn13 = book.isbn13 ?? ""
-
-        subView.imageView.kf.setImage(with: url)
-        subView.titleLabel.text = book.title
-        subView.subtitleLabel.text = book.isEmptySubtitle
-        subView.isbn13Label.text = book.isbn13
-        subView.priceLabel.text = book.exchangeRateCurrencyKR
-        subView.urlLabel.text = book.url
+        let response = viewModel.transform(req: ViewModel.Input(action: actionTriggers.asObservable(), isbn13: isbn13Relay))
+        
+        subView.setupDI(book: response.booksRelay)
     }
 
     // MARK: - View

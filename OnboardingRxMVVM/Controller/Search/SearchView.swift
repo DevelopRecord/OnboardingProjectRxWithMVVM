@@ -145,6 +145,8 @@ class SearchView: UIBaseView {
             }
         }).disposed(by: disposeBag)
 
+        
+        
         return self
     }
 

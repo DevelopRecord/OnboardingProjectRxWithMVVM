@@ -37,7 +37,7 @@ class SearchViewController: UIBaseViewController {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
-//        urlBinding()
+        urlBinding()
 
         requestTrigger.accept(())
     }
@@ -52,15 +52,6 @@ class SearchViewController: UIBaseViewController {
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
             .setupDI(relay: actionTriggers)
-
-        response.detailBookRelay
-            .subscribe(onNext: { [weak self] book in
-            guard let `self` = self else { return }
-            let controller = DetailBookViewController()
-            controller.setupRequest(with: book)
-            controller.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(controller, animated: true)
-        }).disposed(by: disposeBag)
     }
 
     // MARK: - View
@@ -80,6 +71,20 @@ class SearchViewController: UIBaseViewController {
     /// 사파리 이동하기 위한 데이터 바인딩 메서드
     func urlBinding() {
         actionTriggers
+            .filter { $0.index == 1 }
+            .subscribe(onNext: { [weak self] in
+                guard let `self` = self else { return }
+                switch $0 {
+                case .selectedBook(let book):
+                    let controller = DetailBookViewController()
+                    controller.isbn13Relay.accept(book.isbn13)
+                    controller.hidesBottomBarWhenPushed = true
+                    self.navigationController?.pushViewController(controller, animated: true)
+                default: break
+                }
+            }).disposed(by: disposeBag)
+
+        actionTriggers
             .filter { $0.index == 3 }
             .subscribe(onNext: { [weak self] in
             guard let `self` = self else { return }
@@ -93,10 +98,4 @@ class SearchViewController: UIBaseViewController {
             }
         }).disposed(by: disposeBag)
     }
-    
-//    func urlBinding2() {
-//        actionTriggers
-//            .filter { $0.index == 3 }
-//            .bind(to: <#T##SearchTriggerType...##SearchTriggerType#>)
-//    }
 }

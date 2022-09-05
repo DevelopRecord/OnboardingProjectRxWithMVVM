@@ -16,7 +16,7 @@ class DetailBookView: UIBaseView {
     
     // MARK: - Properties
     
-    var isbn13: String = ""
+    var disposeBag = DisposeBag()
     
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
@@ -43,22 +43,18 @@ class DetailBookView: UIBaseView {
 
     let titleLabel = UILabel().then {
         $0.font = UIFont.boldSystemFont(ofSize: 20)
-        $0.text = "TITLE LABEL"
     }
 
     let subtitleLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "SUBTITLE LABEL"
     }
 
     let isbn13Label = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "ISBN13 LABEL"
     }
 
     let priceLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "PRICE LABEL"
     }
 
     private lazy var urlView = UIView().then {
@@ -68,7 +64,6 @@ class DetailBookView: UIBaseView {
 
     let urlLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "URL LABEL"
         $0.textColor = .systemBlue
     }
 
@@ -87,9 +82,27 @@ class DetailBookView: UIBaseView {
     }
     
     // MARK: - Model type implemente
+    
     typealias Model = Void
     
+    // MARK: - Dependency Injection
+
+    func setupDI(book: Observable<Book>) {
+        book.bind(onNext: { [weak self] book in
+            guard let `self` = self else { return }
+            guard let image = book.image, let url = URL(string: image) else { return }
+
+            self.imageView.kf.setImage(with: url)
+            self.titleLabel.text = book.title
+            self.subtitleLabel.text = book.isEmptySubtitle
+            self.isbn13Label.text = book.isbn13
+            self.priceLabel.text = book.exchangeRateCurrencyKR
+            self.urlLabel.text = book.url
+        }).disposed(by: disposeBag)
+    }
+    
     // MARK: - Methods
+
     override func setupLayout() {
         backgroundColor = .systemBackground
 

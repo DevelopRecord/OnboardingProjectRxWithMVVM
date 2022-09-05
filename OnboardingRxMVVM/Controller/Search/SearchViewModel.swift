@@ -98,10 +98,8 @@ class SearchViewModel: ViewModelType {
             if !self.query.value.isEmpty {
                 fetchSearchBooks(self.query.value, page: page.value)
             }
-        case .selectedBook(let book):
-            if let isbn13 = book.isbn13 {
-                fetchDetailBook(isbn13)
-            }
+        case .selectedBook(_):
+            print("searchViewModel selectedBook")
         case .modeState(let state):
             print("상태: \(state)")
             if state == .onboarding {
@@ -185,22 +183,6 @@ extension SearchViewModel {
 
             case .failure(_):
                 Toast.shared.showToast(R.SearchViewTextMessage.noSearchRequestMessage)
-            }
-        }.disposed(by: disposeBag)
-    }
-
-    private func fetchDetailBook(_ isbn13: String?) {
-        guard let isbn13 = isbn13 else { return }
-        let result: Single<Book> = apiService.fetchDetailBook(isbn13: isbn13)
-
-        result
-            .subscribe { [weak self] state in
-            guard let `self` = self else { return }
-            switch state {
-            case .success(let book):
-                self.detailBookRelay.accept(book)
-            case .failure(_):
-                Toast.shared.showToast(R.SearchViewTextMessage.failDetailMessage)
             }
         }.disposed(by: disposeBag)
     }
