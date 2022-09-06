@@ -55,8 +55,9 @@ class NewBooksCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
     
-    deinit {
-        print("newbook deinit")
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
     }
     
     // MARK: - Dependency Injection

@@ -22,6 +22,8 @@ enum SearchTriggerType {
     case presentSafari(String?)
     /// 더보기
     case isLoadMore(Bool)
+    case searchState(Bool)
+    case cancelled
 
     /// 원시값 대신 사용하기 위함. 연관값과 원시값을 동시에 사용할 수 없기때문에.
     var index: Int {
@@ -31,6 +33,8 @@ enum SearchTriggerType {
         case .modeState(_): return 2
         case .presentSafari(_): return 3
         case .isLoadMore(_): return 4
+        case .searchState(_): return 5
+        case .cancelled: return 6
         }
     }
 }
@@ -52,13 +56,16 @@ class SearchViewModel: ViewModelType {
 
     /// collectionView에 뿌려줄 데이터 리스트
     private var booksRelay: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
-    private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
 
     /// Paging 처리에 필요한 전역 프로퍼티
     private var page = BehaviorRelay<Int>(value: 1)
+    /// 마지막 페이지
     private var endPage: Int = 0
+    /// 검색 쿼리문
     private var query = BehaviorRelay<String>(value: "")
+    /// 더보기 했을 때 나오는 책 리스트
     private var moreBooksList: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
+    /// 더보기 여부
     private var isLoadMore: BehaviorRelay<Bool> = BehaviorRelay<Bool>(value: false)
 
     let modeState = BehaviorRelay<Mode>(value: .onboarding)
@@ -76,7 +83,6 @@ class SearchViewModel: ViewModelType {
 
     struct Output {
         let booksRelay: Observable<[Book]>
-        let detailBookRelay: PublishRelay<Book>
     }
 
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -88,45 +94,54 @@ class SearchViewModel: ViewModelType {
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)
 
-        return Output(booksRelay: booksRelay.asObservable(), detailBookRelay: detailBookRelay)
+        return Output(booksRelay: booksRelay.asObservable())
     }
 
     func actionTriggerRequest(trigger: SearchTriggerType) {
         switch trigger {
         case .searchQuery(let query):
             self.query.accept(query)
-            if !self.query.value.isEmpty {
-                fetchSearchBooks(self.query.value, page: page.value)
-            }
-        case .selectedBook(_):
-            print("searchViewModel selectedBook")
+            print(self.query.value)
+            print(query)
         case .modeState(let state):
-            print("상태: \(state)")
             if state == .onboarding {
-                booksRelay.accept([])
+                /// 온보딩 상태
                 fetchNewBooks()
-            } else if state == .search {
-                if query.value.isEmpty {
-                    booksRelay.accept([])
-                } else {
-                    fetchSearchBooks(query.value, page: page.value)
-                }
+            } else {
+                /// 검색 상태
+                query.subscribe(onNext: { [weak self] query in
+                    guard let `self` = self else { return }
+                    self.booksRelay.accept([])
+                    self.fetchSearchBooks(query, page: self.page.value)
+                }).disposed(by: disposeBag)
             }
             modeState.accept(state)
         case .isLoadMore(let state):
-            let value = page.value // 1
+            let value = page.value
             self.isLoadMore.accept(state)
 
-            if isLoadMore.value {
-                isLoadMore.accept(false)
-                if 1 <= page.value && page.value < endPage {
-                    page.accept(value + 1)
-                    fetchSearchBooks(query.value, page: page.value)
-                    isLoadMore.accept(true)
+            if !query.value.isEmpty && booksRelay.value.count != 0 {
+                if isLoadMore.value {
+                    isLoadMore.accept(false)
+                    if 1 <= page.value && page.value < endPage {
+                        page.accept(value + 1)
+                        
+                        fetchSearchBooks(query.value, page: page.value)
+                    }
                 }
             }
-        case .presentSafari(_): break
+        case .cancelled:
+            query.accept("")
+            resetProperties()
+
+        default: break
         }
+    }
+    
+    private func resetProperties() {
+        booksRelay.accept([])
+        page.accept(1)
+        endPage = 0
     }
 }
 
@@ -162,20 +177,20 @@ extension SearchViewModel {
                     self.endPage = endPage
 
                     if 1 <= self.page.value && self.page.value < endPage {
-                        var booksValue = self.booksRelay.value
-                        print("카운트: \(booksValue.count)")
+                        var booksValue: [Book] = []
+                        if self.page.value > 1 {
+                            booksValue = self.booksRelay.value
+                        }
+
                         self.moreBooksList.accept(book)
                         booksValue.append(contentsOf: self.moreBooksList.value)
                         self.booksRelay.accept(booksValue)
 
                     } else if self.page.value == endPage {
-                        print("마지막 페이지")
+                        Toast.shared.showToast(R.SearchViewTextMessage.finalPage)
                     }
-
-                    print("페이지: \(self.page.value), 토탈카운트: \(response.total), 끝페이지: \(endPage)")
                 } else {
                     Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
-                    self.booksRelay.accept([])
                 }
 
             case .failure(_):

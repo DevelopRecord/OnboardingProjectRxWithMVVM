@@ -52,6 +52,7 @@ class SearchViewController: UIBaseViewController {
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
             .setupDI(relay: actionTriggers)
+            .test(relay: actionTriggers)
     }
 
     // MARK: - View

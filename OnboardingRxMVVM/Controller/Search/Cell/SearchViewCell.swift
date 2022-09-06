@@ -55,8 +55,9 @@ class SearchViewCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
 
-    deinit {
-        print("searchviewcell deinit")
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
     }
     
     // MARK: - Helpers

@@ -53,6 +53,11 @@ class SearchResultsCell: UIBaseCollectionViewCell {
         $0.text = "http://www.naver.com"
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
+    }
+
     /// 데이터 셋업 메서드
     func setupRequest(with newBooks: Book) {
         guard let URLImage = newBooks.image else { return }

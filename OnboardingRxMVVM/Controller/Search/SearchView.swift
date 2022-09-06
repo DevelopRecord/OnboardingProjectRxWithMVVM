@@ -68,18 +68,13 @@ class SearchView: UIBaseView {
                 if self.mode.value == .onboarding {
                     /// 온보딩 셀로 보여줌
                     let searchViewCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchViewCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchViewCell ?? SearchViewCell()
-                    searchViewCell.disposeBag = DisposeBag()
                     searchViewCell.setupRequest(with: book)
                     searchViewCell.setupDI(action: self.action, urlString: book.url)
                     
                     return searchViewCell
                 } else if self.mode.value == .search {
                     /// 서치 셀로 보여줌
-                    if self.mode.value == .search && book.title == "" {
-                        collectionView.backgroundView = SearchPlaceholderView()
-                    }
                     let searchResultsCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchResultsCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchResultsCell ?? SearchResultsCell()
-                    searchResultsCell.disposeBag = DisposeBag()
                     searchResultsCell.setupRequest(with: book)
                     return searchResultsCell
                 } else {
@@ -124,11 +119,8 @@ class SearchView: UIBaseView {
         return self
     }
 
-    /// 사파리 유저 액션
     @discardableResult
     func setupDI(relay: PublishRelay<SearchTriggerType>) -> Self {
-        action.bind(to: relay).disposed(by: disposeBag)
-
         let action = PublishRelay<SearchTriggerType>()
 
         collectionView.rx.didScroll
@@ -140,19 +132,26 @@ class SearchView: UIBaseView {
             let contentHeight = self.collectionView.contentSize.height
             if offSetY > (contentHeight - self.collectionView.frame.size.height) {
                 if self.mode.value == .search {
-                    print("하단")
-
                     action.accept(.isLoadMore(true))
-                    action.bind(to: relay).disposed(by: self.disposeBag)
                 }
             }
         }).disposed(by: disposeBag)
+        action.bind(to: relay).disposed(by: self.disposeBag)
 
         return self
     }
-
-    func setupDI(modeState: PublishRelay<Mode>) {
-        modeState.bind(to: mode).disposed(by: disposeBag)
+    
+    @discardableResult
+    func test(relay: PublishRelay<SearchTriggerType>) -> Self {
+        let action = PublishRelay<SearchTriggerType>()
+        
+        searchController.searchBar.rx.cancelButtonClicked
+            .subscribe(onNext: { _ in
+                action.accept(.cancelled)
+            }).disposed(by: disposeBag)
+        action.bind(to: relay).disposed(by: disposeBag)
+        
+        return self
     }
 }
 

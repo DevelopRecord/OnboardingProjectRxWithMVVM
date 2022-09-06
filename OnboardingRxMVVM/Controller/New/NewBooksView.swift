@@ -46,7 +46,6 @@ class NewBooksView: UIBaseView {
         collectionView.rx.setDelegate(self).disposed(by: disposeBag)
         book.bind(to: collectionView.rx.items) { collectionView, index, book -> UICollectionViewCell in
             let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
-            newBooksCell.disposeBag = DisposeBag()
             newBooksCell.setupRequest(with: book)
             newBooksCell.setupDI(action: self.action, urlString: book.url)
             return newBooksCell

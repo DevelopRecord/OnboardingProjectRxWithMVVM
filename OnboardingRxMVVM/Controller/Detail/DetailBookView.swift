@@ -144,7 +144,7 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
                 actionType.accept(.textViewMode(false))
             }).disposed(by: disposeBag)
 
-        actionType.bind(to: action).disposed(by: self.disposeBag)
+        actionType.bind(to: action).disposed(by: disposeBag)
         return self
     }
     

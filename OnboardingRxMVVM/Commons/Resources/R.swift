@@ -56,6 +56,9 @@ extension R.SearchViewTextMessage {
 
     /// 검색어를 입력해보세요.
     static let enterSearchQuery: String = "검색어를 입력해보세요."
+    
+    /// 마지막 페이지입니다.
+    static let finalPage: String = "마지막 페이지입니다."
 }
 
 // MARK: - DetailBookController
