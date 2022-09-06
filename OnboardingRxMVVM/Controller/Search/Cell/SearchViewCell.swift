@@ -13,7 +13,7 @@ class SearchViewCell: UIBaseCollectionViewCell {
 
     // MARK: - Properties
 
-    let disposeBag = DisposeBag()
+    var disposeBag = DisposeBag()
 
     static let identifier = "SearchViewCell"
 

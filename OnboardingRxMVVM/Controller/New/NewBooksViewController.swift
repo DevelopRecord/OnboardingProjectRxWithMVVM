@@ -52,14 +52,6 @@ class NewBooksViewController: UIBaseViewController {
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
             .setupDI(relay: actionTriggers)
-
-//        response.detailBookRelay
-//            .subscribe(onNext: { [weak self] book in
-//                guard let `self` = self else { return }
-//                let controller = DetailBookViewController()
-//                controller.setupRequest(with: book)
-//                self.navigationController?.pushViewController(controller, animated: true)
-//            }).disposed(by: disposeBag)
     }
 
     // MARK: - Helpers
@@ -96,7 +88,6 @@ class NewBooksViewController: UIBaseViewController {
                 switch $0 {
                 case .presentSafari(let urlString):
                     guard let urlString = urlString, let url = URL(string: urlString) else { return }
-                    print("URL: \(url)")
                     let safariViewController = SFSafariViewController(url: url)
                     self.present(safariViewController, animated: true)
                 default:

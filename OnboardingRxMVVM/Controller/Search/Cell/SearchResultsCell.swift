@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 
 class SearchResultsCell: UIBaseCollectionViewCell {
     
@@ -13,6 +14,8 @@ class SearchResultsCell: UIBaseCollectionViewCell {
     
     /// SearchResultsCell Identifier
     static let identifier = "SearchResultsCell"
+    
+    var disposeBag = DisposeBag()
 
     private lazy var imageView = UIImageView().then {
         $0.contentMode = .scaleAspectFill

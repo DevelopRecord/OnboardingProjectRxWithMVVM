@@ -12,11 +12,18 @@ import Then
 import RxSwift
 import RxCocoa
 
-class DetailBookView: UIBaseView {
+class DetailBookView: UIBaseView, UITextViewDelegate {
+    
+    // MARK: - Model type implemente
+    
+    typealias Model = Void
     
     // MARK: - Properties
     
     var disposeBag = DisposeBag()
+    
+    /// 사용자의 액션을 담는 데이터 요청 트리거
+    private var action: PublishRelay<DetailTriggerType> = PublishRelay<DetailTriggerType>()
     
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
@@ -72,7 +79,6 @@ class DetailBookView: UIBaseView {
     }
 
     lazy var textView = UITextView().then {
-        $0.text = R.DetailBookTextMessage.enterMemo
         $0.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         $0.isScrollEnabled = false
         $0.clipsToBounds = true
@@ -81,13 +87,18 @@ class DetailBookView: UIBaseView {
         $0.layer.borderColor = UIColor.systemGray2.cgColor
     }
     
-    // MARK: - Model type implemente
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+
+    }
     
-    typealias Model = Void
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     // MARK: - Dependency Injection
-
-    func setupDI(book: Observable<Book>) {
+    @discardableResult
+    func setupDI(book: Observable<Book>) -> Self {
         book.bind(onNext: { [weak self] book in
             guard let `self` = self else { return }
             guard let image = book.image, let url = URL(string: image) else { return }
@@ -99,6 +110,52 @@ class DetailBookView: UIBaseView {
             self.priceLabel.text = book.exchangeRateCurrencyKR
             self.urlLabel.text = book.url
         }).disposed(by: disposeBag)
+    
+        return self
+    }
+    
+    @discardableResult
+    /// UITextView 텍스트
+    func textSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
+        textView.rx.text
+            .orEmpty
+            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .map { .saveText($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
+        return self
+    }
+    
+    @discardableResult
+    /// UITextView DidBeginEditing, DidEndEditing
+    func textViewStateSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
+        let actionType = PublishRelay<DetailTriggerType>()
+
+        textView.rx.didBeginEditing
+            .bind(onNext: { _ in
+                actionType.accept(.textViewMode(true))
+//                actionType.accept(.textViewTextColor(self.textView.textColor!))
+            }).disposed(by: disposeBag)
+
+        textView.rx.didEndEditing
+            .bind(onNext: { _ in
+                actionType.accept(.textViewMode(false))
+            }).disposed(by: disposeBag)
+
+        actionType.bind(to: action).disposed(by: self.disposeBag)
+        return self
+    }
+    
+    @discardableResult
+    func viewSetupDI(action: PublishRelay<DetailTriggerType>, savedText: BehaviorRelay<String?>) -> Self {
+        savedText.bind(onNext: { [weak self] text in
+            guard let `self` = self else { return }
+            self.textView.text = text
+        }).disposed(by: disposeBag)
+
+        return self
     }
     
     // MARK: - Methods

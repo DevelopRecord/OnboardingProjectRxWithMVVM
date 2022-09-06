@@ -21,7 +21,8 @@ class DetailBookViewController: UIBaseViewController {
     // MARK: - Properties
     
     var disposeBag = DisposeBag()
-    private var actionTriggers: PublishRelay<Void> = PublishRelay<Void>()
+    private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
+    private var actionTriggers = PublishRelay<DetailTriggerType>()
     
     var book: BehaviorRelay<Book?> = BehaviorRelay<Book?>(value: nil)
     var isbn13Relay: BehaviorRelay<String?> = BehaviorRelay<String?>(value: nil)
@@ -34,14 +35,18 @@ class DetailBookViewController: UIBaseViewController {
         setupSubview()
         dismissKeyboardWhenTappedAround()
         
-        actionTriggers.accept(())
+        requestTrigger.accept(())
+        actionTriggers.accept(.refresh)
     }
 
     // MARK: - Binding
     func bindingViewModel() {
-        let response = viewModel.transform(req: ViewModel.Input(action: actionTriggers.asObservable(), isbn13: isbn13Relay))
-        
-        subView.setupDI(book: response.booksRelay)
+        let response = viewModel.transform(req: ViewModel.Input(viewDidLoaded: requestTrigger.asObservable(), action: actionTriggers, isbn13: isbn13Relay))
+        subView
+            .setupDI(book: response.booksRelay)
+            .textSetupDI(action: actionTriggers)
+            .textViewStateSetupDI(action: actionTriggers)
+            .viewSetupDI(action: actionTriggers, savedText: response.savedText)
     }
 
     // MARK: - View
@@ -59,9 +64,6 @@ class DetailBookViewController: UIBaseViewController {
     }
     
     private func setupSubview() {
-        subView.scrollView.delegate = self
-        subView.textView.delegate = self
-        
         let notification = NotificationCenter.default // 싱글톤 패턴. 사용 시점에 초기화해서 메모리 관리
 
         notification.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
@@ -99,8 +101,4 @@ class DetailBookViewController: UIBaseViewController {
         subView.scrollView.contentInset = .zero
         subView.scrollView.scrollIndicatorInsets = .zero
     }
-}
-
-extension DetailBookViewController: UITextViewDelegate {
-    
 }

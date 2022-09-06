@@ -116,19 +116,16 @@ class SearchViewModel: ViewModelType {
         case .isLoadMore(let state):
             let value = page.value // 1
             self.isLoadMore.accept(state)
-            
+
             if isLoadMore.value {
                 isLoadMore.accept(false)
                 if 1 <= page.value && page.value < endPage {
                     page.accept(value + 1)
                     fetchSearchBooks(query.value, page: page.value)
                     isLoadMore.accept(true)
-                } else if page.value == endPage {
-                    print("마지막, page2: \(page.value)")
                 }
             }
-        case .presentSafari(let urlString):
-            print("URL: \(urlString)")
+        case .presentSafari(_): break
         }
     }
 }

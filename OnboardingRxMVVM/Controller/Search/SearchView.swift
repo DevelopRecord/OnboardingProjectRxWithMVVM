@@ -68,8 +68,10 @@ class SearchView: UIBaseView {
                 if self.mode.value == .onboarding {
                     /// 온보딩 셀로 보여줌
                     let searchViewCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchViewCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchViewCell ?? SearchViewCell()
+                    searchViewCell.disposeBag = DisposeBag()
                     searchViewCell.setupRequest(with: book)
                     searchViewCell.setupDI(action: self.action, urlString: book.url)
+                    
                     return searchViewCell
                 } else if self.mode.value == .search {
                     /// 서치 셀로 보여줌
@@ -77,6 +79,7 @@ class SearchView: UIBaseView {
                         collectionView.backgroundView = SearchPlaceholderView()
                     }
                     let searchResultsCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchResultsCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchResultsCell ?? SearchResultsCell()
+                    searchResultsCell.disposeBag = DisposeBag()
                     searchResultsCell.setupRequest(with: book)
                     return searchResultsCell
                 } else {
@@ -145,8 +148,6 @@ class SearchView: UIBaseView {
             }
         }).disposed(by: disposeBag)
 
-        
-        
         return self
     }
 
@@ -166,7 +167,6 @@ extension SearchView: UISearchResultsUpdating {
 }
 
 extension SearchView: UICollectionViewDelegateFlowLayout {
-
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         if indexPath.section == 0 {
             let result = mode.value == .onboarding ? CGSize(width: frame.width, height: 255) : CGSize(width: frame.width, height: 160)
