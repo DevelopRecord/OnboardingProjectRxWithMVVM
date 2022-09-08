@@ -22,9 +22,6 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
     
     var disposeBag = DisposeBag()
     
-    /// 사용자의 액션을 담는 데이터 요청 트리거
-    private var action: PublishRelay<DetailTriggerType> = PublishRelay<DetailTriggerType>()
-    
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
     }
@@ -87,15 +84,6 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
         $0.layer.borderColor = UIColor.systemGray2.cgColor
     }
     
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
     // MARK: - Dependency Injection
     @discardableResult
     func setupDI(book: Observable<Book>) -> Self {
@@ -117,7 +105,7 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
     @discardableResult
     /// UITextView 텍스트
     func textSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
-        textView.rx.text
+        textView.rx.text                    // 서치바 텍스트 변경
             .orEmpty
             .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
@@ -125,26 +113,16 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
             .bind(to: action)
             .disposed(by: disposeBag)
         
-        return self
-    }
-    
-    @discardableResult
-    /// UITextView DidBeginEditing, DidEndEditing
-    func textViewStateSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
-        let actionType = PublishRelay<DetailTriggerType>()
-
-        textView.rx.didBeginEditing
-            .bind(onNext: { _ in
-                actionType.accept(.textViewMode(true))
-//                actionType.accept(.textViewTextColor(self.textView.textColor!))
-            }).disposed(by: disposeBag)
-
-        textView.rx.didEndEditing
-            .bind(onNext: { _ in
-                actionType.accept(.textViewMode(false))
-            }).disposed(by: disposeBag)
-
-        actionType.bind(to: action).disposed(by: disposeBag)
+        textView.rx.didBeginEditing         // 텍스트뷰 편집 시작
+            .map { .textViewMode(true) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
+        textView.rx.didEndEditing           // 텍스트뷰 편집 끝
+            .map { .textViewMode(false) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
         return self
     }
     

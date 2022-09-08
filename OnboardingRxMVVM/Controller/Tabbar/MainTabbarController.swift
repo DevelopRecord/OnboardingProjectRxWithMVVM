@@ -22,11 +22,11 @@ class MainTabbarController: UITabBarController {
         view.backgroundColor = .clear
         
         let newBooksViewController = NewBooksViewController()
-        newBooksViewController.viewModel = NewBooksViewModel(apiService: APIService.shared)
+        newBooksViewController.viewModel = NewBooksViewModel()
         let newBook = configureNavigationController(title: "New", tabbarImage: UIImage(systemName: "book") ?? UIImage(), rootViewController: newBooksViewController)
         
         let searchViewController = SearchViewController()
-        searchViewController.viewModel = SearchViewModel(apiService: APIService.shared)
+        searchViewController.viewModel = SearchViewModel()
         let searchBook = configureNavigationController(title: "Search", tabbarImage: UIImage(systemName: "magnifyingglass") ?? UIImage(), rootViewController: searchViewController)
         
         viewControllers = [newBook, searchBook]

@@ -16,36 +16,33 @@ class DetailBookViewController: UIBaseViewController {
     typealias ViewModel = DetailBookViewModel
 
     // MARK: - ViewModelProtocol
-    var viewModel: ViewModel = DetailBookViewModel(apiService: APIService())
+    var viewModel: ViewModel!
 
     // MARK: - Properties
     
     var disposeBag = DisposeBag()
+
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
     private var actionTriggers = PublishRelay<DetailTriggerType>()
-    
-    var book: BehaviorRelay<Book?> = BehaviorRelay<Book?>(value: nil)
-    var isbn13Relay: BehaviorRelay<String?> = BehaviorRelay<String?>(value: nil)
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupLayout()
-        bindingViewModel()
-        setupSubview()
         dismissKeyboardWhenTappedAround()
-        
+        observeKeyboard()
+        bindingViewModel()
+
         requestTrigger.accept(())
         actionTriggers.accept(.refresh)
     }
 
     // MARK: - Binding
     func bindingViewModel() {
-        let response = viewModel.transform(req: ViewModel.Input(viewDidLoaded: requestTrigger.asObservable(), action: actionTriggers, isbn13: isbn13Relay))
+        let response = viewModel.transform(req: ViewModel.Input(viewDidLoaded: requestTrigger.asObservable(), action: actionTriggers))
+        
         subView
             .setupDI(book: response.booksRelay)
             .textSetupDI(action: actionTriggers)
-            .textViewStateSetupDI(action: actionTriggers)
             .viewSetupDI(action: actionTriggers, savedText: response.savedText)
     }
 
@@ -62,10 +59,18 @@ class DetailBookViewController: UIBaseViewController {
             $0.edges.equalToSuperview()
         }
     }
-    
-    private func setupSubview() {
-        let notification = NotificationCenter.default // 싱글톤 패턴. 사용 시점에 초기화해서 메모리 관리
+}
 
+extension DetailBookViewController {
+    /// 뷰에서 키보드를 제외한 주변 탭 시 키보드 dismiss 설정 함수
+    func dismissKeyboardWhenTappedAround() {
+        let tap = UITapGestureRecognizer(target: view, action: #selector(UIView.endEditing(_:)))
+        view.addGestureRecognizer(tap)
+    }
+
+    private func observeKeyboard() {
+        let notification = NotificationCenter.default // 싱글톤 패턴. 사용 시점에 초기화해서 메모리 관리
+        
         notification.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
         notification.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
     }

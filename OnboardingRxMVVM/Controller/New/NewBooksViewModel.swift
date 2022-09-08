@@ -11,15 +11,10 @@ import RxCocoa
 import RxSwift
 
 enum NewBooksTriggerType {
+    /// 책 선택
     case selectedBook(Book)
+    /// 사파리 이동
     case presentSafari(String?)
-    
-    var index: Int {
-        switch self {
-        case .selectedBook(_): return 0
-        case .presentSafari(_): return 1
-        }
-    }
 }
 
 class NewBooksViewModel: ViewModelType {
@@ -29,14 +24,12 @@ class NewBooksViewModel: ViewModelType {
     typealias ViewModel = NewBooksViewModel
 
     private var disposeBag: DisposeBag = DisposeBag()
+    /// 책 리스트
     private var booksRelay: PublishRelay<[Book]> = PublishRelay<[Book]>()
-    private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
-
-    private let apiService: APIService
-
-    init(apiService: APIService) {
-        self.apiService = apiService
-    }
+    /// 사파리 이동 URL
+    private var presentSafari = PublishRelay<URL>()
+    /// 책 ISBN13
+    private var pushSelectedBook = PublishRelay<String?>()
 
     struct Input {
         let viewDidLoaded: Observable<Void>
@@ -45,7 +38,8 @@ class NewBooksViewModel: ViewModelType {
 
     struct Output {
         let booksRelay: Observable<[Book]>
-        let detailBookRelay: PublishRelay<Book>
+        let presentSafari: PublishRelay<URL>
+        let pushSelectedBook: PublishRelay<String?>
     }
 
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -57,22 +51,25 @@ class NewBooksViewModel: ViewModelType {
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)
 
-        return Output(booksRelay: booksRelay.asObservable(), detailBookRelay: detailBookRelay)
+        return Output(booksRelay: booksRelay.asObservable(),
+                      presentSafari: presentSafari,
+                      pushSelectedBook: pushSelectedBook)
     }
 
     func actionTriggerRequest(action: NewBooksTriggerType) {
         switch action {
-        case .selectedBook(_):
-            print("newBooksViewModel selectedBook")
-        default:
-            break
+        case .selectedBook(let book):
+            pushSelectedBook.accept(book.isbn13)
+        case .presentSafari(let urlString):
+            guard let urlString = urlString, let url = URL(string: urlString) else { return }
+            presentSafari.accept(url)
         }
     }
 }
 
 extension NewBooksViewModel {
     private func fetchNewBooks() {
-        let result: Single<BookResponse> = self.apiService.fetchNewBooks()
+        let result: Single<BookResponse> = APIService.shared.fetchNewBooks()
 
         result.subscribe({ [weak self] state in
             guard let `self` = self else { return }

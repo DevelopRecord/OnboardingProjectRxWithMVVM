@@ -21,8 +21,9 @@ class NewBooksViewController: UIBaseViewController {
 
     var disposeBag: DisposeBag = DisposeBag()
 
-    private var newBooks: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
+    /// 뷰 로드 트리거
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
+    /// 사용자 액션 트리거
     let actionTriggers = PublishRelay<NewBooksTriggerType>()
 
     // MARK: - ViewModelProtocol
@@ -37,7 +38,6 @@ class NewBooksViewController: UIBaseViewController {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
-        urlBinding()
 
         requestTrigger.accept(())
     }
@@ -51,7 +51,26 @@ class NewBooksViewController: UIBaseViewController {
         subView
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
-            .setupDI(relay: actionTriggers)
+
+        response.pushSelectedBook
+            .bind(onNext: { [weak self] isbn13 in
+                guard let `self` = self else { return }
+                guard let isbn13 = isbn13 else {
+                    self.navigationController?.popViewController(animated: true)
+                    return
+                }
+                let controller = DetailBookViewController()
+                controller.viewModel = DetailBookViewModel(isbn13: isbn13)
+                controller.hidesBottomBarWhenPushed = true
+                self.navigationController?.pushViewController(controller, animated: true)
+            }).disposed(by: disposeBag)
+        
+        response.presentSafari
+            .bind(onNext: { [weak self] url in
+                guard let `self` = self else { return }
+                let safariController = SFSafariViewController(url: url)
+                self.present(safariController, animated: true)
+            }).disposed(by: disposeBag)
     }
 
     // MARK: - Helpers
@@ -64,35 +83,5 @@ class NewBooksViewController: UIBaseViewController {
         subView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-    }
-
-    func urlBinding() {
-        actionTriggers
-            .filter { $0.index == 0 }
-            .subscribe(onNext: { [weak self] in
-                guard let `self` = self else { return }
-                switch $0 {
-                case .selectedBook(let book):
-                    let controller = DetailBookViewController()
-                    controller.isbn13Relay.accept(book.isbn13)
-                    controller.hidesBottomBarWhenPushed = true
-                    self.navigationController?.pushViewController(controller, animated: true)
-                default: break
-                }
-            }).disposed(by: disposeBag)
-        
-        actionTriggers
-            .filter { $0.index == 1 }
-            .subscribe(onNext: { [weak self] in
-                guard let `self` = self else { return }
-                switch $0 {
-                case .presentSafari(let urlString):
-                    guard let urlString = urlString, let url = URL(string: urlString) else { return }
-                    let safariViewController = SFSafariViewController(url: url)
-                    self.present(safariViewController, animated: true)
-                default:
-                    break
-                }
-            }).disposed(by: disposeBag)
     }
 }

@@ -104,30 +104,3 @@ class SearchResultsCell: UIBaseCollectionViewCell {
         }
     }
 }
-
-class LoadingCell: UIBaseCollectionViewCell {
-
-    // MARK: - Properties
-
-    /// LoadingCell Identifier
-    static let identifier = "LoadingCell"
-
-    private lazy var activityIndicator = UIActivityIndicatorView()
-
-    // MARK: - Helpers
-
-    override func setupLayout() {
-        contentView.backgroundColor = .secondarySystemBackground
-
-        contentView.addSubview(activityIndicator)
-        activityIndicator.snp.makeConstraints {
-            $0.width.height.equalTo(32)
-            $0.center.equalToSuperview()
-        }
-    }
-
-    /// Activity Indicator 시작 메서드
-    func startAnimating() {
-        activityIndicator.startAnimating()
-    }
-}
