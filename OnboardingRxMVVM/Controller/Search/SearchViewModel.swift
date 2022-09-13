@@ -104,6 +104,11 @@ class SearchViewModel: ViewModelType {
                     self.booksRelay.accept([])
                     self.fetchSearchBooks(query, page: self.page.value)
                 }).disposed(by: disposeBag)
+                // Bool 값을 view로 던져줌 -> Bool값으로 조건식 판별하여 true일땐 서치모드가 돼도 셀이 안바뀌게 그리고 newBooks데이터 보여줌
+                // false일 땐 그대로
+//                if booksRelay.value.isEmpty {
+//                    fetchNewBooks()
+//                }
             }
             modeState.accept(state)
         case .isLoadMore(let state):
@@ -167,7 +172,7 @@ extension SearchViewModel {
                     } else {                                // 책 리스트가 있을 때
                         self.isEmptyBookList.accept(true)
                     }
-
+                    print(book)
                     /// 책 리스트 개수
                     guard let total = response.total else { return }
                     /// 마지막 페이지

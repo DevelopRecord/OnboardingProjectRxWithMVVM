@@ -56,7 +56,6 @@ class APIService: UIAnimatable, FetchRequestProtocol {
 
     func fetchNewBooks() -> Single<BookResponse> {
         let urlString = URLAddress.baseUrl.rawValue + URLAddress.newUrl.rawValue
-//        guard let url = URL(string: urlString) else { return nil }
         guard let url = URL(string: urlString) else {
             return Observable.error(NSError(domain: "url generation error in Fetch new books", code: 404, userInfo: nil)).asSingle()
         }
@@ -66,8 +65,9 @@ class APIService: UIAnimatable, FetchRequestProtocol {
 
     func fetchSearchBooks(query: String, page: Int) -> Single<BookResponse> {
         let urlString = URLAddress.baseUrl.rawValue + URLAddress.searchUrl.rawValue + "\(query)/" + "\(page)"
-        guard let url = URL(string: urlString) else {
-            return Observable.error(NSError(domain: "url generation error in Fetch search books", code: 404, userInfo: nil)).asSingle()
+        guard let encodedUrlString = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: encodedUrlString) else {
+            return Observable.error(NSError(domain: "url generation error in Fetch new books", code: 404, userInfo: nil)).asSingle()
         }
         
         return self.fetchRequest(url: url)

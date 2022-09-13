@@ -280,7 +280,6 @@
 		C35FB6CC28B4D7C7000B1DCC /* Detail */ = {
 			isa = PBXGroup;
 			children = (
-				C35FB6D728B4DA17000B1DCC /* View */,
 				C35FB70E28B60531000B1DCC /* DetailBookViewController.swift */,
 				C35FB70F28B60531000B1DCC /* DetailBookView.swift */,
 				C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */,
@@ -309,13 +308,6 @@
 				C35FB6F128B5EAA1000B1DCC /* NewBooksViewModel.swift */,
 			);
 			path = New;
-			sourceTree = "<group>";
-		};
-		C35FB6D728B4DA17000B1DCC /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
 			sourceTree = "<group>";
 		};
 		C35FB6D828B4DA19000B1DCC /* Cell */ = {

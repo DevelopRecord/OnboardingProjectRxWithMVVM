@@ -43,8 +43,8 @@ class SearchViewController: UIBaseViewController {
     // MARK: - Binding
     func bindingViewModel() {
         let response = viewModel.transform(req: ViewModel.Input(
-            viewDidLoaded: requestTrigger.asObservable(),
-            action: actionTriggers))
+                                           viewDidLoaded: requestTrigger.asObservable(),
+                                           action: actionTriggers))
 
         subView
             .setupDI(book: response.booksRelay)
