@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 
 class SearchResultsCell: UIBaseCollectionViewCell {
     
@@ -13,6 +14,8 @@ class SearchResultsCell: UIBaseCollectionViewCell {
     
     /// SearchResultsCell Identifier
     static let identifier = "SearchResultsCell"
+    
+    var disposeBag = DisposeBag()
 
     private lazy var imageView = UIImageView().then {
         $0.contentMode = .scaleAspectFill
@@ -50,6 +53,11 @@ class SearchResultsCell: UIBaseCollectionViewCell {
         $0.text = "http://www.naver.com"
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
+    }
+
     /// 데이터 셋업 메서드
     func setupRequest(with newBooks: Book) {
         guard let URLImage = newBooks.image else { return }
@@ -94,32 +102,5 @@ class SearchResultsCell: UIBaseCollectionViewCell {
         urlLabel.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
         }
-    }
-}
-
-class LoadingCell: UIBaseCollectionViewCell {
-
-    // MARK: - Properties
-
-    /// LoadingCell Identifier
-    static let identifier = "LoadingCell"
-
-    private lazy var activityIndicator = UIActivityIndicatorView()
-
-    // MARK: - Helpers
-
-    override func setupLayout() {
-        contentView.backgroundColor = .secondarySystemBackground
-
-        contentView.addSubview(activityIndicator)
-        activityIndicator.snp.makeConstraints {
-            $0.width.height.equalTo(32)
-            $0.center.equalToSuperview()
-        }
-    }
-
-    /// Activity Indicator 시작 메서드
-    func startAnimating() {
-        activityIndicator.startAnimating()
     }
 }

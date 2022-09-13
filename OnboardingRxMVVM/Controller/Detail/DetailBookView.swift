@@ -12,11 +12,15 @@ import Then
 import RxSwift
 import RxCocoa
 
-class DetailBookView: UIBaseView {
+class DetailBookView: UIBaseView, UITextViewDelegate {
+    
+    // MARK: - Model type implemente
+    
+    typealias Model = Void
     
     // MARK: - Properties
     
-    var isbn13: String = ""
+    var disposeBag = DisposeBag()
     
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
@@ -43,22 +47,18 @@ class DetailBookView: UIBaseView {
 
     let titleLabel = UILabel().then {
         $0.font = UIFont.boldSystemFont(ofSize: 20)
-        $0.text = "TITLE LABEL"
     }
 
     let subtitleLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "SUBTITLE LABEL"
     }
 
     let isbn13Label = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "ISBN13 LABEL"
     }
 
     let priceLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "PRICE LABEL"
     }
 
     private lazy var urlView = UIView().then {
@@ -68,7 +68,6 @@ class DetailBookView: UIBaseView {
 
     let urlLabel = UILabel().then {
         $0.font = UIFont.systemFont(ofSize: 17)
-        $0.text = "URL LABEL"
         $0.textColor = .systemBlue
     }
 
@@ -77,7 +76,6 @@ class DetailBookView: UIBaseView {
     }
 
     lazy var textView = UITextView().then {
-        $0.text = R.DetailBookTextMessage.enterMemo
         $0.font = UIFont.systemFont(ofSize: 16, weight: .semibold)
         $0.isScrollEnabled = false
         $0.clipsToBounds = true
@@ -86,10 +84,60 @@ class DetailBookView: UIBaseView {
         $0.layer.borderColor = UIColor.systemGray2.cgColor
     }
     
-    // MARK: - Model type implemente
-    typealias Model = Void
+    // MARK: - Dependency Injection
+    @discardableResult
+    func setupDI(book: Observable<Book>) -> Self {
+        book.bind(onNext: { [weak self] book in
+            guard let `self` = self else { return }
+            guard let image = book.image, let url = URL(string: image) else { return }
+
+            self.imageView.kf.setImage(with: url)
+            self.titleLabel.text = book.title
+            self.subtitleLabel.text = book.isEmptySubtitle
+            self.isbn13Label.text = book.isbn13
+            self.priceLabel.text = book.exchangeRateCurrencyKR
+            self.urlLabel.text = book.url
+        }).disposed(by: disposeBag)
+    
+        return self
+    }
+    
+    @discardableResult
+    /// UITextView 텍스트
+    func textSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
+        textView.rx.text                    // 서치바 텍스트 변경
+            .orEmpty
+            .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .map { .saveText($0) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
+        textView.rx.didBeginEditing         // 텍스트뷰 편집 시작
+            .map { .textViewMode(true) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
+        textView.rx.didEndEditing           // 텍스트뷰 편집 끝
+            .map { .textViewMode(false) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
+        
+        return self
+    }
+    
+    @discardableResult
+    func viewSetupDI(action: PublishRelay<DetailTriggerType>, savedText: BehaviorRelay<String?>) -> Self {
+        savedText.bind(onNext: { [weak self] text in
+            guard let `self` = self else { return }
+            self.textView.text = text
+        }).disposed(by: disposeBag)
+
+        return self
+    }
     
     // MARK: - Methods
+
     override func setupLayout() {
         backgroundColor = .systemBackground
 

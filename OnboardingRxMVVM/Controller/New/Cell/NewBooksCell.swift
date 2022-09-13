@@ -7,6 +7,7 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 class NewBooksCell: UIBaseCollectionViewCell {
 
@@ -54,8 +55,18 @@ class NewBooksCell: UIBaseCollectionViewCell {
         $0.textAlignment = .center
     }
     
-    deinit {
-        print("newbook deinit")
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        disposeBag = DisposeBag()
+    }
+    
+    // MARK: - Dependency Injection
+    
+    func setupDI(action: PublishRelay<NewBooksTriggerType>, urlString: String?) {
+        linkButton.rx.tap
+            .map { .presentSafari(urlString) }
+            .bind(to: action)
+            .disposed(by: disposeBag)
     }
     
     // MARK: - Helpers

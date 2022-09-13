@@ -19,7 +19,7 @@ class NewBooksView: UIBaseView {
     var disposeBag = DisposeBag()
 
     /// 사용자의 액션을 담는 데이터 요청 트리거
-    private var action: PublishRelay<NewBooksTriggerType> = PublishRelay<NewBooksTriggerType>()
+    private var actionTriggers: PublishRelay<NewBooksTriggerType> = PublishRelay<NewBooksTriggerType>()
 
     lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout()).then {
         $0.backgroundColor = .clear
@@ -29,6 +29,15 @@ class NewBooksView: UIBaseView {
     // MARK: - Model type implemente
 
     typealias Model = Void
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        bindData()
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     // MARK: - Methods
 
@@ -41,38 +50,34 @@ class NewBooksView: UIBaseView {
         }
     }
 
-    @discardableResult
-    func setupDI(book: Observable<[Book]>) -> Self {
-        collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-        book.bind(to: collectionView.rx.items) { collectionView, index, book -> UICollectionViewCell in
-            let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
-            newBooksCell.setupRequest(with: book)
-
-            newBooksCell.linkButton.rx.tap
-                .map { _ in
-                    print(book.title, book.url)
-                    return NewBooksTriggerType.presentSafari(book.url)
-                }
-                .bind(to: self.action)
-                .disposed(by: newBooksCell.disposeBag)
-            return newBooksCell
-        }.disposed(by: disposeBag)
-        return self
+    func bindData() {
+        collectionView.rx.modelSelected(Book.self)  // 컬렉션 셀 선택
+            .map { .selectedBook($0) }
+            .bind(to: actionTriggers)
+            .disposed(by: disposeBag)
     }
 
     @discardableResult
-    func setupDI(action: PublishRelay<NewBooksTriggerType>) -> Self {
-        collectionView.rx.modelSelected(Book.self)
-            .map { .selectedBook($0) }
-            .bind(to: action)
-            .disposed(by: disposeBag)
+    func setupDI(book: Observable<[Book]>) -> Self {
+        collectionView.rx.setDelegate(self).disposed(by: disposeBag)
+        book.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
+            guard let `self` = self else { return UICollectionViewCell() }
+            let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
+            newBooksCell.setupRequest(with: book)
+            newBooksCell.setupDI(action: self.actionTriggers, urlString: book.url)
+            return newBooksCell
+        }.disposed(by: disposeBag)
+
         return self
     }
 
     /// 사파리 유저 액션
     @discardableResult
-    func setupDI(relay: PublishRelay<NewBooksTriggerType>) -> Self {
-        action.bind(to: relay).disposed(by: disposeBag)
+    func setupDI(action: PublishRelay<NewBooksTriggerType>) -> Self {
+        actionTriggers
+            .bind(to: action)
+            .disposed(by: disposeBag)
+
         return self
     }
 }

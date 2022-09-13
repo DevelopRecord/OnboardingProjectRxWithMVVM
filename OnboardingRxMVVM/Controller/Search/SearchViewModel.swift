@@ -22,17 +22,8 @@ enum SearchTriggerType {
     case presentSafari(String?)
     /// 더보기
     case isLoadMore(Bool)
-
-    /// 원시값 대신 사용하기 위함. 연관값과 원시값을 동시에 사용할 수 없기때문에.
-    var index: Int {
-        switch self {
-        case .searchQuery(_): return 0
-        case .selectedBook(_): return 1
-        case .modeState(_): return 2
-        case .presentSafari(_): return 3
-        case .isLoadMore(_): return 4
-        }
-    }
+    /// 취소 버튼
+    case cancelled
 }
 
 enum Mode {
@@ -52,22 +43,24 @@ class SearchViewModel: ViewModelType {
 
     /// collectionView에 뿌려줄 데이터 리스트
     private var booksRelay: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
-    private var detailBookRelay: PublishRelay<Book> = PublishRelay<Book>()
-
     /// Paging 처리에 필요한 전역 프로퍼티
     private var page = BehaviorRelay<Int>(value: 1)
+    /// 마지막 페이지
     private var endPage: Int = 0
+    /// 검색 쿼리문
     private var query = BehaviorRelay<String>(value: "")
+    /// 더보기 했을 때 나오는 책 리스트
     private var moreBooksList: BehaviorRelay<[Book]> = BehaviorRelay<[Book]>(value: [])
+    /// 더보기 여부
     private var isLoadMore: BehaviorRelay<Bool> = BehaviorRelay<Bool>(value: false)
-
-    let modeState = BehaviorRelay<Mode>(value: .onboarding)
-
-    private let apiService: APIService
-
-    init(apiService: APIService) {
-        self.apiService = apiService
-    }
+    /// 사파리 URL
+    private let presentSafari = PublishRelay<URL>()
+    /// 선택한 책 isbn13
+    private let pushSelectedBook = PublishRelay<String?>()
+    /// 모드 상태
+    private let modeState = BehaviorRelay<Mode>(value: .onboarding)
+    /// 책 리스트 유무
+    private var isEmptyBookList = PublishRelay<Bool>()
 
     struct Input {
         let viewDidLoaded: Observable<Void>
@@ -76,7 +69,9 @@ class SearchViewModel: ViewModelType {
 
     struct Output {
         let booksRelay: Observable<[Book]>
-        let detailBookRelay: PublishRelay<Book>
+        let presentSafari: PublishRelay<URL>
+        let pushSelectedBook: PublishRelay<String?>
+        let isEmptyBookList: PublishRelay<Bool>
     }
 
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -88,56 +83,68 @@ class SearchViewModel: ViewModelType {
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)
 
-        return Output(booksRelay: booksRelay.asObservable(), detailBookRelay: detailBookRelay)
+        return Output(booksRelay: booksRelay.asObservable(),
+                      presentSafari: presentSafari,
+                      pushSelectedBook: pushSelectedBook,
+                      isEmptyBookList: isEmptyBookList)
     }
 
     func actionTriggerRequest(trigger: SearchTriggerType) {
         switch trigger {
         case .searchQuery(let query):
             self.query.accept(query)
-            if !self.query.value.isEmpty {
-                fetchSearchBooks(self.query.value, page: page.value)
-            }
         case .selectedBook(let book):
-            if let isbn13 = book.isbn13 {
-                fetchDetailBook(isbn13)
-            }
+            pushSelectedBook.accept(book.isbn13)
         case .modeState(let state):
-            print("상태: \(state)")
-            if state == .onboarding {
-                booksRelay.accept([])
+            if state == .onboarding {       // 온보딩 상태
                 fetchNewBooks()
-            } else if state == .search {
-                if query.value.isEmpty {
-                    booksRelay.accept([])
-                } else {
-                    fetchSearchBooks(query.value, page: page.value)
-                }
+            } else {                        // 검색 상태
+                query.subscribe(onNext: { [weak self] query in
+                    guard let `self` = self else { return }
+                    self.booksRelay.accept([])
+                    self.fetchSearchBooks(query, page: self.page.value)
+                }).disposed(by: disposeBag)
+                // Bool 값을 view로 던져줌 -> Bool값으로 조건식 판별하여 true일땐 서치모드가 돼도 셀이 안바뀌게 그리고 newBooks데이터 보여줌
+                // false일 땐 그대로
+//                if booksRelay.value.isEmpty {
+//                    fetchNewBooks()
+//                }
             }
             modeState.accept(state)
         case .isLoadMore(let state):
-            let value = page.value // 1
+            let value = page.value
             self.isLoadMore.accept(state)
-            
-            if isLoadMore.value {
-                isLoadMore.accept(false)
-                if 1 <= page.value && page.value < endPage {
-                    page.accept(value + 1)
-                    fetchSearchBooks(query.value, page: page.value)
-                    isLoadMore.accept(true)
-                } else if page.value == endPage {
-                    print("마지막, page2: \(page.value)")
+
+            if !query.value.isEmpty && booksRelay.value.count != 0 {
+                if isLoadMore.value {
+                    isLoadMore.accept(false)
+                    if 1 <= page.value && page.value < endPage {
+                        page.accept(value + 1)
+                        
+                        fetchSearchBooks(query.value, page: page.value)
+                    }
                 }
             }
-        case .presentSafari(let urlString):
-            print("URL: \(urlString)")
+        case .cancelled:
+            query.accept("")
+            resetProperties()
+        case .presentSafari(let str):
+            guard let urlString = str, let url = URL(string: urlString) else { return }
+            presentSafari.accept(url)
         }
+    }
+    
+    /// 프로퍼티 리셋
+    private func resetProperties() {
+        booksRelay.accept([])
+        page.accept(1)
+        endPage = 0
     }
 }
 
 extension SearchViewModel {
     private func fetchNewBooks() {
-        let result: Single<BookResponse> = apiService.fetchNewBooks()
+        let result: Single<BookResponse> = APIService.shared.fetchNewBooks()
 
         result.subscribe { [weak self] state in
             guard let `self` = self else { return }
@@ -153,13 +160,19 @@ extension SearchViewModel {
     }
 
     private func fetchSearchBooks(_ query: String, page: Int) {
-        let result: Single<BookResponse> = apiService.fetchSearchBooks(query: query, page: page)
+        let result: Single<BookResponse> = APIService.shared.fetchSearchBooks(query: query, page: page)
 
         result.subscribe { [weak self] state in
             guard let `self` = self else { return }
             switch state {
             case .success(let response):
                 if let book = response.books {
+                    if book.isEmpty {                       // 책 리스트가 없을 때
+                        self.isEmptyBookList.accept(false)
+                    } else {                                // 책 리스트가 있을 때
+                        self.isEmptyBookList.accept(true)
+                    }
+                    print(book)
                     /// 책 리스트 개수
                     guard let total = response.total else { return }
                     /// 마지막 페이지
@@ -167,40 +180,24 @@ extension SearchViewModel {
                     self.endPage = endPage
 
                     if 1 <= self.page.value && self.page.value < endPage {
-                        var booksValue = self.booksRelay.value
-                        print("카운트: \(booksValue.count)")
+                        var booksValue: [Book] = []
+                        if self.page.value > 1 {
+                            booksValue = self.booksRelay.value
+                        }
+
                         self.moreBooksList.accept(book)
                         booksValue.append(contentsOf: self.moreBooksList.value)
                         self.booksRelay.accept(booksValue)
 
                     } else if self.page.value == endPage {
-                        print("마지막 페이지")
+                        Toast.shared.showToast(R.SearchViewTextMessage.finalPage)
                     }
-
-                    print("페이지: \(self.page.value), 토탈카운트: \(response.total), 끝페이지: \(endPage)")
                 } else {
                     Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
-                    self.booksRelay.accept([])
                 }
 
             case .failure(_):
                 Toast.shared.showToast(R.SearchViewTextMessage.noSearchRequestMessage)
-            }
-        }.disposed(by: disposeBag)
-    }
-
-    private func fetchDetailBook(_ isbn13: String?) {
-        guard let isbn13 = isbn13 else { return }
-        let result: Single<Book> = apiService.fetchDetailBook(isbn13: isbn13)
-
-        result
-            .subscribe { [weak self] state in
-            guard let `self` = self else { return }
-            switch state {
-            case .success(let book):
-                self.detailBookRelay.accept(book)
-            case .failure(_):
-                Toast.shared.showToast(R.SearchViewTextMessage.failDetailMessage)
             }
         }.disposed(by: disposeBag)
     }

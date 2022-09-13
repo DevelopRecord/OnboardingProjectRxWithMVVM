@@ -43,6 +43,7 @@
 		C35FB71328B60531000B1DCC /* DetailBookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */; };
 		C35FB71528B606FE000B1DCC /* SearchPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */; };
 		C3BAF85C28C07FA700808822 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BAF85B28C07FA700808822 /* Toast.swift */; };
+		C3E3E0EE28C97A1700763B04 /* UISearchBar+.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E3E0ED28C97A1700763B04 /* UISearchBar+.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +107,7 @@
 		C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailBookViewModel.swift; sourceTree = "<group>"; };
 		C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPlaceholderView.swift; sourceTree = "<group>"; };
 		C3BAF85B28C07FA700808822 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
+		C3E3E0ED28C97A1700763B04 /* UISearchBar+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UISearchBar+.swift"; sourceTree = "<group>"; };
 		D3A461D78C8855F8F6A08DF9 /* Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5881E8C62CA09A1613D8170 /* Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; sourceTree = "<group>"; };
 		EAD2B176E4116E54385E8821 /* Pods-OnboardingRxMVVMTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVMTests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVMTests/Pods-OnboardingRxMVVMTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -177,6 +179,8 @@
 			isa = PBXGroup;
 			children = (
 				C35FB6F828B5F3FB000B1DCC /* UIViewController+ */,
+				C3E3E0EB28C9789800763B04 /* UIView+ */,
+				C3E3E0EC28C979F600763B04 /* UISearchBar+ */,
 			);
 			path = "Extensions+";
 			sourceTree = "<group>";
@@ -276,7 +280,6 @@
 		C35FB6CC28B4D7C7000B1DCC /* Detail */ = {
 			isa = PBXGroup;
 			children = (
-				C35FB6D728B4DA17000B1DCC /* View */,
 				C35FB70E28B60531000B1DCC /* DetailBookViewController.swift */,
 				C35FB70F28B60531000B1DCC /* DetailBookView.swift */,
 				C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */,
@@ -305,13 +308,6 @@
 				C35FB6F128B5EAA1000B1DCC /* NewBooksViewModel.swift */,
 			);
 			path = New;
-			sourceTree = "<group>";
-		};
-		C35FB6D728B4DA17000B1DCC /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
 			sourceTree = "<group>";
 		};
 		C35FB6D828B4DA19000B1DCC /* Cell */ = {
@@ -362,7 +358,6 @@
 			isa = PBXGroup;
 			children = (
 				C35FB6F928B5F404000B1DCC /* UIViewController+.swift */,
-				C35FB70028B5F87C000B1DCC /* UIView+.swift */,
 			);
 			path = "UIViewController+";
 			sourceTree = "<group>";
@@ -373,6 +368,22 @@
 				C3BAF85B28C07FA700808822 /* Toast.swift */,
 			);
 			path = Toast;
+			sourceTree = "<group>";
+		};
+		C3E3E0EB28C9789800763B04 /* UIView+ */ = {
+			isa = PBXGroup;
+			children = (
+				C35FB70028B5F87C000B1DCC /* UIView+.swift */,
+			);
+			path = "UIView+";
+			sourceTree = "<group>";
+		};
+		C3E3E0EC28C979F600763B04 /* UISearchBar+ */ = {
+			isa = PBXGroup;
+			children = (
+				C3E3E0ED28C97A1700763B04 /* UISearchBar+.swift */,
+			);
+			path = "UISearchBar+";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -619,6 +630,7 @@
 				C35FB70628B5FD6F000B1DCC /* SearchView.swift in Sources */,
 				C35FB70B28B6002F000B1DCC /* SearchResultsCell.swift in Sources */,
 				C35FB6E028B5AB93000B1DCC /* UIAnimatable.swift in Sources */,
+				C3E3E0EE28C97A1700763B04 /* UISearchBar+.swift in Sources */,
 				C35FB6FA28B5F404000B1DCC /* UIViewController+.swift in Sources */,
 				C35FB6DD28B5AB33000B1DCC /* Book.swift in Sources */,
 				C35FB71328B60531000B1DCC /* DetailBookViewModel.swift in Sources */,

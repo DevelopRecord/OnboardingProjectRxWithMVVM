@@ -30,14 +30,12 @@ class SearchViewController: UIBaseViewController {
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
     /// 사용자의 액션을 담는 데이터 요청 트리거
     private var actionTriggers: PublishRelay<SearchTriggerType> = PublishRelay<SearchTriggerType>()
-    
 
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
-//        urlBinding()
 
         requestTrigger.accept(())
     }
@@ -45,22 +43,33 @@ class SearchViewController: UIBaseViewController {
     // MARK: - Binding
     func bindingViewModel() {
         let response = viewModel.transform(req: ViewModel.Input(
-            viewDidLoaded: requestTrigger.asObservable(),
-            action: actionTriggers))
+                                           viewDidLoaded: requestTrigger.asObservable(),
+                                           action: actionTriggers))
 
         subView
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
-            .setupDI(relay: actionTriggers)
-
-        response.detailBookRelay
-            .subscribe(onNext: { [weak self] book in
-            guard let `self` = self else { return }
-            let controller = DetailBookViewController()
-            controller.setupRequest(with: book)
-            controller.hidesBottomBarWhenPushed = true
-            self.navigationController?.pushViewController(controller, animated: true)
-        }).disposed(by: disposeBag)
+            .setupDI(isEmptyBook: response.isEmptyBookList)
+        
+        response.presentSafari          // 사파리 이동
+            .subscribe(onNext: { [weak self] url in
+                guard let `self` = self else { return }
+                let safariViewController = SFSafariViewController(url: url)
+                self.present(safariViewController, animated: true)
+            }).disposed(by: disposeBag)
+        
+        response.pushSelectedBook       // 상세정보 이동
+            .bind(onNext: { [weak self] isbn13 in
+                guard let `self` = self else { return }
+                guard let isbn13 = isbn13 else {
+                    self.navigationController?.popViewController(animated: true)
+                    return
+                }
+                let controller = DetailBookViewController()
+                controller.viewModel = DetailBookViewModel(isbn13: isbn13)
+                controller.hidesBottomBarWhenPushed = true
+                self.navigationController?.pushViewController(controller, animated: true)
+            }).disposed(by: disposeBag)
     }
 
     // MARK: - View
@@ -76,27 +85,4 @@ class SearchViewController: UIBaseViewController {
             $0.edges.equalToSuperview()
         }
     }
-
-    /// 사파리 이동하기 위한 데이터 바인딩 메서드
-    func urlBinding() {
-        actionTriggers
-            .filter { $0.index == 3 }
-            .subscribe(onNext: { [weak self] in
-            guard let `self` = self else { return }
-            switch $0 {
-            case .presentSafari(let urlString):
-                guard let urlString = urlString, let url = URL(string: urlString) else { return }
-                let safariViewController = SFSafariViewController(url: url)
-                self.present(safariViewController, animated: true)
-            default:
-                break
-            }
-        }).disposed(by: disposeBag)
-    }
-    
-//    func urlBinding2() {
-//        actionTriggers
-//            .filter { $0.index == 3 }
-//            .bind(to: <#T##SearchTriggerType...##SearchTriggerType#>)
-//    }
 }
