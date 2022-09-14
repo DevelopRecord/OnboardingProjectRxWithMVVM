@@ -172,7 +172,7 @@ extension SearchViewModel {
                     } else {                                // 책 리스트가 있을 때
                         self.isEmptyBookList.accept(true)
                     }
-                    print(book)
+                    
                     /// 책 리스트 개수
                     guard let total = response.total else { return }
                     /// 마지막 페이지

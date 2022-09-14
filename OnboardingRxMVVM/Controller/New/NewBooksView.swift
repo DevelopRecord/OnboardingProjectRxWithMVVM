@@ -51,7 +51,7 @@ class NewBooksView: UIBaseView {
     }
 
     func bindData() {
-        collectionView.rx.modelSelected(Book.self)  // 컬렉션 셀 선택
+        collectionView.rx.modelSelected(Book.self)      // 컬렉션 셀 선택
             .map { .selectedBook($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
@@ -71,7 +71,7 @@ class NewBooksView: UIBaseView {
         return self
     }
 
-    /// 사파리 유저 액션
+    /// 유저 액션
     @discardableResult
     func setupDI(action: PublishRelay<NewBooksTriggerType>) -> Self {
         actionTriggers

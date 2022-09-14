@@ -13,7 +13,7 @@ class NewBooksCell: UIBaseCollectionViewCell {
 
     // MARK: - Properties
     
-    static let identifier = "UIBaseCollectionViewCell"
+    static let identifier = "NewBooksCell"
     
     var disposeBag: DisposeBag = DisposeBag()
     
@@ -74,7 +74,7 @@ class NewBooksCell: UIBaseCollectionViewCell {
     func setupRequest(with newBooks: Book) {
         imageView.kf.setImage(with: URL(string: newBooks.image ?? ""))
         titleLabel.text = newBooks.title
-        subtitleLabel.text = newBooks.subtitle
+        subtitleLabel.text = newBooks.isEmptySubtitle
         priceLabel.text = newBooks.exchangeRateCurrencyKR
         isbn13Label.text = newBooks.isbn13
     }

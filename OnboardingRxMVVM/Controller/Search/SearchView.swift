@@ -23,7 +23,7 @@ class SearchView: UIBaseView {
 
     /// 사용자의 액션을 담는 데이터 요청 트리거
     private var actionTriggers: PublishRelay<SearchTriggerType> = PublishRelay<SearchTriggerType>()
-    
+
     // MARK: - View
 
     let flowLayout = UICollectionViewFlowLayout()
@@ -70,7 +70,7 @@ class SearchView: UIBaseView {
     }
 
     private func bindData() {
-        searchController.searchBar.rx.text // 서치바 텍스트 변경
+        searchController.searchBar.rx.text                                          // 서치바 텍스트 변경
             .orEmpty
             .debounce(.milliseconds(350), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
@@ -78,31 +78,32 @@ class SearchView: UIBaseView {
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
 
-        collectionView.rx.modelSelected(Book.self) // 컬렉션 셀 선택
+        collectionView.rx.modelSelected(Book.self)                                  // 컬렉션 셀 선택
             .map { .selectedBook($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
 
-        mode.distinctUntilChanged() // 모드 변경
+        mode                                                                        // 모드 변경
+            .distinctUntilChanged()
             .map { .modeState($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
 
-        collectionView.rx.didScroll // 컬렉션 뷰 스크롤 감지
+        collectionView.rx.didScroll                                                 // 컬렉션 뷰 스크롤 감지
             .throttle(.milliseconds(750), scheduler: MainScheduler.instance)
             .bind(onNext: { [weak self] in
             guard let `self` = self else { return }
 
             let offSetY = self.collectionView.contentOffset.y
             let contentHeight = self.collectionView.contentSize.height
-            if offSetY > (contentHeight - self.collectionView.frame.size.height) {
+            if offSetY > (contentHeight - self.collectionView.frame.size.height) {  // 컬렉션 뷰 최하단 스크롤 감지
                 if self.mode.value == .search {
                     self.actionTriggers.accept(.isLoadMore(true))
                 }
             }
         }).disposed(by: disposeBag)
 
-        searchController.searchBar.rx.cancelButtonClicked
+        searchController.searchBar.rx.cancelButtonClicked                           // 서치바 취소버튼
             .subscribe(onNext: { [weak self] _ in
                 guard let `self` = self else { return }
                 self.actionTriggers.accept(.cancelled)
@@ -116,10 +117,10 @@ class SearchView: UIBaseView {
         collectionView.delegate = nil
         collectionView.dataSource = nil
         collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-        
+
         book.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
             guard let `self` = self else { return UICollectionViewCell() }
-            if self.mode.value == .onboarding  {
+            if self.mode.value == .onboarding {
                 /// 온보딩 셀로 보여줌
                 let searchViewCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchViewCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchViewCell ?? SearchViewCell()
                 self.flowLayout.minimumLineSpacing = 20
@@ -133,7 +134,7 @@ class SearchView: UIBaseView {
                 searchResultsCell.setupRequest(with: book)
                 return searchResultsCell
             }
-            
+
         }.disposed(by: disposeBag)
 
         return self
@@ -143,20 +144,14 @@ class SearchView: UIBaseView {
     func setupDI(isEmptyBook: PublishRelay<Bool>) -> Self {
         let tap = UITapGestureRecognizer()
         fakeView.addGestureRecognizer(tap)
+        self.searchController.view.addSubview(self.fakeView)
 
         isEmptyBook.bind(onNext: { [weak self] bool in
             guard let `self` = self else { return }
             self.fakeView.isHidden = bool
-
-            if !bool { // bool == false == 값이 없음
-                self.searchController.view.addSubview(self.fakeView)
-                self.collectionView.backgroundView = self.placeholderView
-            } else { // bool == true == 값이 있음
-                self.fakeView.removeFromSuperview()
-                self.collectionView.backgroundView = nil
-            }
+            self.collectionView.backgroundView = bool ? nil : self.placeholderView
         }).disposed(by: disposeBag)
-        
+
         tap.rx.event
             .bind(onNext: { [weak self] _ in
             guard let `self` = self else { return }

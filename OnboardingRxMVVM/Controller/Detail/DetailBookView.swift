@@ -13,15 +13,15 @@ import RxSwift
 import RxCocoa
 
 class DetailBookView: UIBaseView, UITextViewDelegate {
-    
+
     // MARK: - Model type implemente
-    
+
     typealias Model = Void
-    
+
     // MARK: - Properties
-    
+
     var disposeBag = DisposeBag()
-    
+
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
     }
@@ -83,7 +83,7 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
         $0.layer.borderWidth = 1
         $0.layer.borderColor = UIColor.systemGray2.cgColor
     }
-    
+
     // MARK: - Dependency Injection
     @discardableResult
     func setupDI(book: Observable<Book>) -> Self {
@@ -98,34 +98,34 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
             self.priceLabel.text = book.exchangeRateCurrencyKR
             self.urlLabel.text = book.url
         }).disposed(by: disposeBag)
-    
+
         return self
     }
-    
+
     @discardableResult
-    /// UITextView 텍스트
+    /// UITextView 사용자 액션
     func textSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
-        textView.rx.text                    // 서치바 텍스트 변경
+        textView.rx.text // 서치바 텍스트 변경
             .orEmpty
             .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .map { .saveText($0) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
-        textView.rx.didBeginEditing         // 텍스트뷰 편집 시작
+
+        textView.rx.didBeginEditing // 텍스트뷰 편집 시작
             .map { .textViewMode(true) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
-        textView.rx.didEndEditing           // 텍스트뷰 편집 끝
+
+        textView.rx.didEndEditing // 텍스트뷰 편집 끝
             .map { .textViewMode(false) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
+
         return self
     }
-    
+
     @discardableResult
     func viewSetupDI(action: PublishRelay<DetailTriggerType>, savedText: BehaviorRelay<String?>) -> Self {
         savedText.bind(onNext: { [weak self] text in
@@ -135,7 +135,7 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
 
         return self
     }
-    
+
     // MARK: - Methods
 
     override func setupLayout() {

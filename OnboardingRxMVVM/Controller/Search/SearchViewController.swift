@@ -61,10 +61,8 @@ class SearchViewController: UIBaseViewController {
         response.pushSelectedBook       // 상세정보 이동
             .bind(onNext: { [weak self] isbn13 in
                 guard let `self` = self else { return }
-                guard let isbn13 = isbn13 else {
-                    self.navigationController?.popViewController(animated: true)
-                    return
-                }
+                guard let isbn13 = isbn13 else { return }
+
                 let controller = DetailBookViewController()
                 controller.viewModel = DetailBookViewModel(isbn13: isbn13)
                 controller.hidesBottomBarWhenPushed = true

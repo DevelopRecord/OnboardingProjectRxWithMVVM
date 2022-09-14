@@ -26,6 +26,8 @@ class DetailBookViewModel: ViewModelType {
     private let userDefaults = UserDefaults.standard
     /// 저장될 text
     private var userDefaultsText: BehaviorRelay<String?> = BehaviorRelay<String?>(value: nil)
+    /// 에러 발생 시 받아올 프로퍼티
+    private var isError = PublishRelay<Error>()
 
      init(isbn13: String) {
         self.isbn13 = isbn13
@@ -39,6 +41,7 @@ class DetailBookViewModel: ViewModelType {
     struct Output {
         let booksRelay: Observable<Book>
         let savedText: BehaviorRelay<String?>
+        let isError: Observable<Error>
     }
     
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -51,7 +54,7 @@ class DetailBookViewModel: ViewModelType {
             .disposed(by: disposeBag)
         
         return Output(booksRelay: booksRelay.asObservable(),
-                      savedText: userDefaultsText)
+                      savedText: userDefaultsText, isError: isError.asObservable())
     }
     
     func actionTriggerRequest(type: DetailTriggerType) {
@@ -81,8 +84,8 @@ extension DetailBookViewModel {
             switch state {
             case .success(let response):
                 self.booksRelay.accept(response)
-            case .failure(_):
-                Toast.shared.showToast(R.DetailBookTextMessage.failDetailMessage)
+            case .failure(let err):
+                self.isError.accept(err)
             }
         }.disposed(by: disposeBag)
     }
