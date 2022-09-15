@@ -51,22 +51,20 @@ class SearchViewController: UIBaseViewController {
             .setupDI(action: actionTriggers)
             .setupDI(isEmptyBook: response.isEmptyBookList)
         
-        response.presentSafari          // 사파리 이동
-            .subscribe(onNext: { [weak self] url in
-                guard let `self` = self else { return }
-                let safariViewController = SFSafariViewController(url: url)
-                self.present(safariViewController, animated: true)
-            }).disposed(by: disposeBag)
-        
-        response.pushSelectedBook       // 상세정보 이동
-            .bind(onNext: { [weak self] isbn13 in
-                guard let `self` = self else { return }
-                guard let isbn13 = isbn13 else { return }
-
-                let controller = DetailBookViewController()
-                controller.viewModel = DetailBookViewModel(isbn13: isbn13)
-                controller.hidesBottomBarWhenPushed = true
-                self.navigationController?.pushViewController(controller, animated: true)
+        response.outputRequest
+            .withUnretained(self)
+            .bind(onNext: { owner, output in
+                switch output {
+                case .presentSafari(let url):
+                    let safariViewController = SFSafariViewController(url: url)
+                    owner.present(safariViewController, animated: true)
+                case .pushSelectedBook(let isbn13):
+                    guard let isbn13 = isbn13 else { return }
+                    let controller = DetailBookViewController()
+                    controller.viewModel = DetailBookViewModel(isbn13: isbn13)
+                    controller.hidesBottomBarWhenPushed = true
+                    owner.navigationController?.pushViewController(controller, animated: true)
+                }
             }).disposed(by: disposeBag)
     }
 

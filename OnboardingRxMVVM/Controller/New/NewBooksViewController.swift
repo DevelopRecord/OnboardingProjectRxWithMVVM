@@ -24,7 +24,7 @@ class NewBooksViewController: UIBaseViewController {
     /// 뷰 로드 트리거
     private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
     /// 사용자 액션 트리거
-    let actionTriggers = PublishRelay<NewBooksTriggerType>()
+    private let actionTriggers = PublishRelay<NewBooksTriggerType>()
 
     // MARK: - ViewModelProtocol
 
@@ -51,23 +51,21 @@ class NewBooksViewController: UIBaseViewController {
         subView
             .setupDI(book: response.booksRelay)
             .setupDI(action: actionTriggers)
-
-        response.pushSelectedBook
-            .bind(onNext: { [weak self] isbn13 in
-                guard let `self` = self else { return }
-                guard let isbn13 = isbn13 else { return }
-
-                let controller = DetailBookViewController()
-                controller.viewModel = DetailBookViewModel(isbn13: isbn13)
-                controller.hidesBottomBarWhenPushed = true
-                self.navigationController?.pushViewController(controller, animated: true)
-            }).disposed(by: disposeBag)
         
-        response.presentSafari
-            .bind(onNext: { [weak self] url in
-                guard let `self` = self else { return }
-                let safariController = SFSafariViewController(url: url)
-                self.present(safariController, animated: true)
+        response.outputRequest
+            .withUnretained(self)
+            .bind(onNext: { owner, output in
+                switch output {
+                case .presentSafari(let url):
+                    let safariController = SFSafariViewController(url: url)
+                    owner.present(safariController, animated: true)
+                case .pushSelectedBook(let isbn13):
+                    guard let isbn13 = isbn13 else { return }
+                    let controller = DetailBookViewController()
+                    controller.viewModel = DetailBookViewModel(isbn13: isbn13)
+                    controller.hidesBottomBarWhenPushed = true
+                    owner.navigationController?.pushViewController(controller, animated: true)
+                }
             }).disposed(by: disposeBag)
     }
 

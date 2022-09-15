@@ -35,7 +35,6 @@ class DetailBookViewController: UIBaseViewController {
         bindingViewModel()
 
         requestTrigger.accept(())
-        actionTriggers.accept(.refresh)
     }
 
     // MARK: - Binding
@@ -47,9 +46,11 @@ class DetailBookViewController: UIBaseViewController {
             .textSetupDI(action: actionTriggers)
             .viewSetupDI(action: actionTriggers, savedText: response.savedText)
         
-        response.isError.bind(onNext: { [weak self] _ in                    // 에러발생 시 네비게이션 팝
-            guard let `self` = self else { return }
-            self.navigationController?.popViewController(animated: true)
+        // 에러발생 시 네비게이션 팝
+        response.isError
+            .withUnretained(self)
+            .bind(onNext: { owner, _ in
+                owner.navigationController?.popViewController(animated: true)
         }).disposed(by: disposeBag)
     }
 

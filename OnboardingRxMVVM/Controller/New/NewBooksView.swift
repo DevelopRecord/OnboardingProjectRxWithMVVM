@@ -56,16 +56,15 @@ class NewBooksView: UIBaseView {
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
     }
-
+    
     @discardableResult
     func setupDI(book: Observable<[Book]>) -> Self {
         collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-        book.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
-            guard let `self` = self else { return UICollectionViewCell() }
-            let newBooksCell = collectionView.dequeueReusableCell(withReuseIdentifier: NewBooksCell.identifier, for: IndexPath(item: index, section: 0)) as? NewBooksCell ?? NewBooksCell()
-            newBooksCell.setupRequest(with: book)
-            newBooksCell.setupDI(action: self.actionTriggers, urlString: book.url)
-            return newBooksCell
+
+        book.bind(to: collectionView.rx.items(cellIdentifier: NewBooksCell.identifier, cellType: NewBooksCell.self)) { [weak self] row, book, cell in
+            guard let `self` = self else { return }
+            cell.setupDI(action: self.actionTriggers)
+            cell.setupRequest(with: book)
         }.disposed(by: disposeBag)
 
         return self

@@ -15,6 +15,9 @@ class NewBooksCell: UIBaseCollectionViewCell {
     
     static let identifier = "NewBooksCell"
     
+    private var actionTriggers = PublishRelay<NewBooksTriggerType>()
+    var bookData: Book?
+
     var disposeBag: DisposeBag = DisposeBag()
     
     private lazy var infoImageView = UIView().then {
@@ -25,9 +28,16 @@ class NewBooksCell: UIBaseCollectionViewCell {
         $0.backgroundColor = .systemGray4
     }
 
-    lazy var linkButton = UIButton(type: .system).then {
+    private lazy var linkButton = UIButton(type: .system).then {
         $0.setImage(UIImage(systemName: "safari"), for: .normal)
         $0.setTitleColor(.systemBlue, for: .normal)
+        
+        let tap = $0.rx.tap
+            .withUnretained(self)
+            .subscribe(onNext: { owner, _ in
+                guard let bookData = owner.bookData else { return }
+                owner.actionTriggers.accept(.presentSafari(bookData.url))
+            })
     }
 
     private lazy var imageView = UIImageView().then {
@@ -61,10 +71,9 @@ class NewBooksCell: UIBaseCollectionViewCell {
     }
     
     // MARK: - Dependency Injection
-    
-    func setupDI(action: PublishRelay<NewBooksTriggerType>, urlString: String?) {
-        linkButton.rx.tap
-            .map { .presentSafari(urlString) }
+
+    func setupDI(action: PublishRelay<NewBooksTriggerType>) {
+        actionTriggers
             .bind(to: action)
             .disposed(by: disposeBag)
     }
@@ -72,7 +81,10 @@ class NewBooksCell: UIBaseCollectionViewCell {
     // MARK: - Helpers
     
     func setupRequest(with newBooks: Book) {
-        imageView.kf.setImage(with: URL(string: newBooks.image ?? ""))
+        bookData = newBooks
+        guard let bookData = bookData else { return }
+
+        imageView.kf.setImage(with: URL(string: bookData.image ?? ""))
         titleLabel.text = newBooks.title
         subtitleLabel.text = newBooks.isEmptySubtitle
         priceLabel.text = newBooks.exchangeRateCurrencyKR

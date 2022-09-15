@@ -10,6 +10,7 @@ import UIKit
 import RxCocoa
 import RxSwift
 
+/// 액션 트리거 타입
 enum NewBooksTriggerType {
     /// 책 선택
     case selectedBook(Book)
@@ -28,8 +29,10 @@ class NewBooksViewModel: ViewModelType {
     private var booksRelay: PublishRelay<[Book]> = PublishRelay<[Book]>()
     /// 사파리 이동 URL
     private var presentSafari = PublishRelay<URL>()
-    /// 책 ISBN13
+    /// 선택한 책 ISBN13
     private var pushSelectedBook = PublishRelay<String?>()
+    /// 아웃풋 요청 타입
+    private var outputRequest = PublishRelay<OutputRequestType>()
 
     struct Input {
         let viewDidLoaded: Observable<Void>
@@ -38,8 +41,7 @@ class NewBooksViewModel: ViewModelType {
 
     struct Output {
         let booksRelay: Observable<[Book]>
-        let presentSafari: PublishRelay<URL>
-        let pushSelectedBook: PublishRelay<String?>
+        let outputRequest: PublishRelay<OutputRequestType>
     }
 
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -52,17 +54,16 @@ class NewBooksViewModel: ViewModelType {
             .disposed(by: disposeBag)
 
         return Output(booksRelay: booksRelay.asObservable(),
-                      presentSafari: presentSafari,
-                      pushSelectedBook: pushSelectedBook)
+                      outputRequest: outputRequest)
     }
 
     func actionTriggerRequest(action: NewBooksTriggerType) {
         switch action {
         case .selectedBook(let book):
-            pushSelectedBook.accept(book.isbn13)
+            outputRequest.accept(.pushSelectedBook(book.isbn13))
         case .presentSafari(let urlString):
             guard let urlString = urlString, let url = URL(string: urlString) else { return }
-            presentSafari.accept(url)
+            outputRequest.accept(.presentSafari(url))
         }
     }
 }
@@ -82,5 +83,13 @@ extension NewBooksViewModel {
                 Toast.shared.showToast(R.NewBooksTextMessage.failListMessage)
             }
         }).disposed(by: disposeBag)
+    }
+}
+
+extension NewBooksViewModel {
+    /// 아웃풋 요청 타입
+    enum OutputRequestType {
+        case presentSafari(URL)
+        case pushSelectedBook(String?)
     }
 }
