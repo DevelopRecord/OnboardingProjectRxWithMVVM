@@ -13,15 +13,15 @@ import RxSwift
 import RxCocoa
 
 class DetailBookView: UIBaseView, UITextViewDelegate {
-    
+
     // MARK: - Model type implemente
-    
+
     typealias Model = Void
-    
+
     // MARK: - Properties
-    
+
     var disposeBag = DisposeBag()
-    
+
     lazy var scrollView = UIScrollView().then {
         $0.backgroundColor = .clear
     }
@@ -83,59 +83,65 @@ class DetailBookView: UIBaseView, UITextViewDelegate {
         $0.layer.borderWidth = 1
         $0.layer.borderColor = UIColor.systemGray2.cgColor
     }
-    
+
     // MARK: - Dependency Injection
     @discardableResult
     func setupDI(book: Observable<Book>) -> Self {
-        book.bind(onNext: { [weak self] book in
-            guard let `self` = self else { return }
-            guard let image = book.image, let url = URL(string: image) else { return }
+        book
+            .withUnretained(self)
+            .bind(onNext: { owner, book in
+                guard let image = book.image, let url = URL(string: image) else { return }
 
-            self.imageView.kf.setImage(with: url)
-            self.titleLabel.text = book.title
-            self.subtitleLabel.text = book.isEmptySubtitle
-            self.isbn13Label.text = book.isbn13
-            self.priceLabel.text = book.exchangeRateCurrencyKR
-            self.urlLabel.text = book.url
+                owner.imageView.kf.setImage(with: url)
+                owner.titleLabel.text = book.title
+                owner.subtitleLabel.text = book.isEmptySubtitle
+                owner.isbn13Label.text = book.isbn13
+                owner.priceLabel.text = book.exchangeRateCurrencyKR
+                owner.urlLabel.text = book.url
         }).disposed(by: disposeBag)
-    
+
         return self
     }
-    
+
     @discardableResult
-    /// UITextView 텍스트
+    /// UITextView 사용자 액션
     func textSetupDI(action: PublishRelay<DetailTriggerType>) -> Self {
-        textView.rx.text                    // 서치바 텍스트 변경
+        // 서치바 텍스트 변경
+        textView.rx.text
             .orEmpty
             .debounce(.milliseconds(250), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .map { .saveText($0) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
-        textView.rx.didBeginEditing         // 텍스트뷰 편집 시작
+
+        // 텍스트뷰 편집 시작
+        textView.rx.didBeginEditing
             .map { .textViewMode(true) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
-        textView.rx.didEndEditing           // 텍스트뷰 편집 끝
+
+        // 텍스트뷰 편집 끝
+        textView.rx.didEndEditing
             .map { .textViewMode(false) }
             .bind(to: action)
             .disposed(by: disposeBag)
-        
+
         return self
     }
-    
+
     @discardableResult
     func viewSetupDI(action: PublishRelay<DetailTriggerType>, savedText: BehaviorRelay<String?>) -> Self {
-        savedText.bind(onNext: { [weak self] text in
-            guard let `self` = self else { return }
-            self.textView.text = text
+        savedText
+            .withUnretained(self)
+            .bind(onNext: { owner, text in
+                guard let text = text else { return }
+                owner.textView.text = text
         }).disposed(by: disposeBag)
 
         return self
     }
-    
+
     // MARK: - Methods
 
     override func setupLayout() {

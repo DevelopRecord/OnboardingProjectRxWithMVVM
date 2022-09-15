@@ -23,9 +23,8 @@ class SearchView: UIBaseView {
 
     /// 사용자의 액션을 담는 데이터 요청 트리거
     private var actionTriggers: PublishRelay<SearchTriggerType> = PublishRelay<SearchTriggerType>()
-    
-    // MARK: - View
 
+    // MARK: - View
     let flowLayout = UICollectionViewFlowLayout()
 
     lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: flowLayout).then {
@@ -47,7 +46,11 @@ class SearchView: UIBaseView {
     lazy var fakeView = UIView().then {
         $0.backgroundColor = .clear
         $0.frame = searchController.view.frame
+        $0.addGestureRecognizer(tapGesture)
+        $0.isHidden = true
     }
+    
+    lazy var tapGesture = UITapGestureRecognizer()
 
     lazy var placeholderView = SearchPlaceholderView()
 
@@ -61,51 +64,56 @@ class SearchView: UIBaseView {
     }
 
     // MARK: - Methods
-
     override func setupLayout() {
         self.addSubview(collectionView)
+        self.searchController.view.addSubview(self.fakeView)
         collectionView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
     }
 
     private func bindData() {
-        searchController.searchBar.rx.text // 서치바 텍스트 변경
+        // 서치바 텍스트 변경
+        searchController.searchBar.rx.text
             .orEmpty
             .debounce(.milliseconds(350), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .map { .searchQuery($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
-
-        collectionView.rx.modelSelected(Book.self) // 컬렉션 셀 선택
+        
+        // 컬렉션 셀 선택
+        collectionView.rx.modelSelected(Book.self)
             .map { .selectedBook($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
 
-        mode.distinctUntilChanged() // 모드 변경
+        // 모드 변경
+        mode
+            .distinctUntilChanged()
             .map { .modeState($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
 
-        collectionView.rx.didScroll // 컬렉션 뷰 스크롤 감지
+        // 컬렉션 뷰 스크롤 감지
+        collectionView.rx.didScroll
             .throttle(.milliseconds(750), scheduler: MainScheduler.instance)
-            .bind(onNext: { [weak self] in
-            guard let `self` = self else { return }
-
-            let offSetY = self.collectionView.contentOffset.y
-            let contentHeight = self.collectionView.contentSize.height
-            if offSetY > (contentHeight - self.collectionView.frame.size.height) {
-                if self.mode.value == .search {
-                    self.actionTriggers.accept(.isLoadMore(true))
+            .withUnretained(self)
+            .bind(onNext: { owner, _ in
+            let offSetY = owner.collectionView.contentOffset.y
+            let contentHeight = owner.collectionView.contentSize.height
+            if offSetY > (contentHeight - owner.collectionView.frame.size.height) {
+                if owner.mode.value == .search {
+                    owner.actionTriggers.accept(.isLoadMore(true))
                 }
             }
         }).disposed(by: disposeBag)
 
+        // 서치바 취소버튼
         searchController.searchBar.rx.cancelButtonClicked
-            .subscribe(onNext: { [weak self] _ in
-                guard let `self` = self else { return }
-                self.actionTriggers.accept(.cancelled)
+            .withUnretained(self)
+            .subscribe(onNext: { owner, _ in
+                owner.actionTriggers.accept(.cancelled)
         }).disposed(by: disposeBag)
     }
 
@@ -116,10 +124,10 @@ class SearchView: UIBaseView {
         collectionView.delegate = nil
         collectionView.dataSource = nil
         collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-        
+
         book.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
             guard let `self` = self else { return UICollectionViewCell() }
-            if self.mode.value == .onboarding  {
+            if self.mode.value == .onboarding {
                 /// 온보딩 셀로 보여줌
                 let searchViewCell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchViewCell.identifier, for: IndexPath(item: index, section: 0)) as? SearchViewCell ?? SearchViewCell()
                 self.flowLayout.minimumLineSpacing = 20
@@ -133,7 +141,6 @@ class SearchView: UIBaseView {
                 searchResultsCell.setupRequest(with: book)
                 return searchResultsCell
             }
-            
         }.disposed(by: disposeBag)
 
         return self
@@ -141,26 +148,17 @@ class SearchView: UIBaseView {
 
     @discardableResult
     func setupDI(isEmptyBook: PublishRelay<Bool>) -> Self {
-        let tap = UITapGestureRecognizer()
-        fakeView.addGestureRecognizer(tap)
-
-        isEmptyBook.bind(onNext: { [weak self] bool in
-            guard let `self` = self else { return }
-            self.fakeView.isHidden = bool
-
-            if !bool { // bool == false == 값이 없음
-                self.searchController.view.addSubview(self.fakeView)
-                self.collectionView.backgroundView = self.placeholderView
-            } else { // bool == true == 값이 있음
-                self.fakeView.removeFromSuperview()
-                self.collectionView.backgroundView = nil
-            }
+        isEmptyBook
+            .withUnretained(self)
+            .bind(onNext: { owner, bool in
+                owner.fakeView.isHidden = bool
+                owner.collectionView.backgroundView = bool ? nil : owner.placeholderView
         }).disposed(by: disposeBag)
-        
-        tap.rx.event
-            .bind(onNext: { [weak self] _ in
-            guard let `self` = self else { return }
-            self.searchController.searchBar.endEditing(true)
+
+        tapGesture.rx.event
+            .withUnretained(self)
+            .bind(onNext: { owner, _ in
+                owner.searchController.searchBar.endEditing(true)
         }).disposed(by: disposeBag)
 
         return self
@@ -172,18 +170,13 @@ class SearchView: UIBaseView {
         actionTriggers
             .bind(to: action)
             .disposed(by: disposeBag)
-
         return self
     }
 }
 
 extension SearchView: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
-        if searchController.isActive {
-            mode.accept(.search)
-        } else if !searchController.isActive {
-            mode.accept(.onboarding)
-        }
+        mode.accept(searchController.isActive ? .search : .onboarding)
     }
 }
 

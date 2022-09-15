@@ -22,7 +22,9 @@ class DetailBookViewController: UIBaseViewController {
     
     var disposeBag = DisposeBag()
 
-    private var requestTrigger: PublishRelay<Void> = PublishRelay<Void>()
+    /// 뷰 로드 트리거
+    private var requestTrigger = PublishRelay<Void>()
+    /// 사용자 액션 트리거
     private var actionTriggers = PublishRelay<DetailTriggerType>()
 
     // MARK: - Lifecycle
@@ -33,7 +35,6 @@ class DetailBookViewController: UIBaseViewController {
         bindingViewModel()
 
         requestTrigger.accept(())
-        actionTriggers.accept(.refresh)
     }
 
     // MARK: - Binding
@@ -44,6 +45,13 @@ class DetailBookViewController: UIBaseViewController {
             .setupDI(book: response.booksRelay)
             .textSetupDI(action: actionTriggers)
             .viewSetupDI(action: actionTriggers, savedText: response.savedText)
+        
+        // 에러발생 시 네비게이션 팝
+        response.isError
+            .withUnretained(self)
+            .bind(onNext: { owner, _ in
+                owner.navigationController?.popViewController(animated: true)
+        }).disposed(by: disposeBag)
     }
 
     // MARK: - View

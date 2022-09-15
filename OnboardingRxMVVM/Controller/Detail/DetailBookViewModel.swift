@@ -7,8 +7,6 @@ enum DetailTriggerType {
     case saveText(String?)
     /// 텍스트뷰의 모드
     case textViewMode(Bool)
-    /// 뷰 진입
-    case refresh
 }
 
 class DetailBookViewModel: ViewModelType {
@@ -19,18 +17,20 @@ class DetailBookViewModel: ViewModelType {
     private var disposeBag: DisposeBag = DisposeBag()
 
     /// collectionView에 뿌려줄 데이터 리스트
-    private var booksRelay: BehaviorRelay<Book> = BehaviorRelay<Book>(value: Book(title: "", subtitle: "", isbn13: "", price: "", image: "", url: ""))
+    private var booksRelay: PublishRelay<Book> = PublishRelay<Book>()
     /// VC로부터 받아온 고유번호(isbn13)
     var isbn13: String!
     /// UserDefaults 싱글톤
     private let userDefaults = UserDefaults.standard
     /// 저장될 text
     private var userDefaultsText: BehaviorRelay<String?> = BehaviorRelay<String?>(value: nil)
+    /// 에러 발생 시 받아올 프로퍼티
+    private var isError = PublishRelay<Error>()
 
-     init(isbn13: String) {
+    init(isbn13: String) {
         self.isbn13 = isbn13
     }
-    
+
     struct Input {
         let viewDidLoaded: Observable<Void>
         let action: PublishRelay<DetailTriggerType>
@@ -39,6 +39,7 @@ class DetailBookViewModel: ViewModelType {
     struct Output {
         let booksRelay: Observable<Book>
         let savedText: BehaviorRelay<String?>
+        let isError: Observable<Error>
     }
     
     func transform(req: ViewModel.Input) -> ViewModel.Output {
@@ -51,7 +52,8 @@ class DetailBookViewModel: ViewModelType {
             .disposed(by: disposeBag)
         
         return Output(booksRelay: booksRelay.asObservable(),
-                      savedText: userDefaultsText)
+                      savedText: userDefaultsText,
+                      isError: isError.asObservable())
     }
     
     func actionTriggerRequest(type: DetailTriggerType) {
@@ -61,13 +63,11 @@ class DetailBookViewModel: ViewModelType {
         case .textViewMode(let bool):
             if bool {
                 /// 텍스트뷰 수정 시작했을 떄
-//                userDefaultsText.accept(userDefaults.string(forKey: isbn13))
+                
             } else {
                 /// 텍스트뷰 수정 끝냈을때
                 userDefaults.set(userDefaultsText.value, forKey: isbn13)
             }
-        case .refresh:
-            userDefaultsText.accept(userDefaults.string(forKey: isbn13))
         }
     }
 }
@@ -81,8 +81,9 @@ extension DetailBookViewModel {
             switch state {
             case .success(let response):
                 self.booksRelay.accept(response)
-            case .failure(_):
-                Toast.shared.showToast(R.DetailBookTextMessage.failDetailMessage)
+                self.userDefaultsText.accept(self.userDefaults.string(forKey: self.isbn13))
+            case .failure(let err):
+                self.isError.accept(err)
             }
         }.disposed(by: disposeBag)
     }

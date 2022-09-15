@@ -57,7 +57,7 @@ class APIService: UIAnimatable, FetchRequestProtocol {
     func fetchNewBooks() -> Single<BookResponse> {
         let urlString = URLAddress.baseUrl.rawValue + URLAddress.newUrl.rawValue
         guard let url = URL(string: urlString) else {
-            return Observable.error(NSError(domain: "url generation error in Fetch new books", code: 404, userInfo: nil)).asSingle()
+            return Observable.error(NSError(domain: "Non URL ..", code: 404, userInfo: nil)).asSingle()
         }
         
         return self.fetchRequest(url: url)
@@ -67,7 +67,7 @@ class APIService: UIAnimatable, FetchRequestProtocol {
         let urlString = URLAddress.baseUrl.rawValue + URLAddress.searchUrl.rawValue + "\(query)/" + "\(page)"
         guard let encodedUrlString = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
               let url = URL(string: encodedUrlString) else {
-            return Observable.error(NSError(domain: "url generation error in Fetch new books", code: 404, userInfo: nil)).asSingle()
+            return Observable.error(NSError(domain: "Non URL ..", code: 404, userInfo: nil)).asSingle()
         }
         
         return self.fetchRequest(url: url)
@@ -76,7 +76,7 @@ class APIService: UIAnimatable, FetchRequestProtocol {
     func fetchDetailBook(isbn13: String) -> Single<Book> {
         let urlString = URLAddress.baseUrl.rawValue + URLAddress.detailUrl.rawValue + isbn13
         guard let url = URL(string: urlString) else {
-            return Observable.error(NSError(domain: "url generation error in Fetch detail book", code: 404, userInfo: nil)).asSingle()
+            return Observable.error(NSError(domain: "Non URL ..", code: 404, userInfo: nil)).asSingle()
         }
         
         return self.fetchRequest(url: url)
@@ -109,5 +109,12 @@ class APIService: UIAnimatable, FetchRequestProtocol {
                 request.cancel()
             }
         }
+        .timeout(.seconds(3), scheduler: MainScheduler.instance)
+        .do(onError: { error in
+            if case.timeout = error as? RxError {
+                Toast.shared.showToast("요청시간이 초과하였습니다.")
+                print(error)
+            }
+        })
     }
 }
