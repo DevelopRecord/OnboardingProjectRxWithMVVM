@@ -42,8 +42,14 @@
 		C35FB71228B60531000B1DCC /* DetailBookView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB70F28B60531000B1DCC /* DetailBookView.swift */; };
 		C35FB71328B60531000B1DCC /* DetailBookViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */; };
 		C35FB71528B606FE000B1DCC /* SearchPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */; };
+		C3B10F3528D84EE000CAAA22 /* MainTabBarFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B10F3428D84EE000CAAA22 /* MainTabBarFlow.swift */; };
+		C3B10F3B28D8552900CAAA22 /* AppStepper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B10F3A28D8552900CAAA22 /* AppStepper.swift */; };
+		C3B10F4028D95C6500CAAA22 /* NewBooksFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B10F3F28D95C6500CAAA22 /* NewBooksFlow.swift */; };
+		C3B10F4228D975C600CAAA22 /* SearchBooksFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B10F4128D975C600CAAA22 /* SearchBooksFlow.swift */; };
 		C3BAF85C28C07FA700808822 /* Toast.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3BAF85B28C07FA700808822 /* Toast.swift */; };
 		C3E3E0EE28C97A1700763B04 /* UISearchBar+.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E3E0ED28C97A1700763B04 /* UISearchBar+.swift */; };
+		FBE8055328D7017800BF9F92 /* AppStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE8055228D7017800BF9F92 /* AppStep.swift */; };
+		FBE8055528D71C5E00BF9F92 /* AppFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE8055428D71C5E00BF9F92 /* AppFlow.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,11 +112,17 @@
 		C35FB70F28B60531000B1DCC /* DetailBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailBookView.swift; sourceTree = "<group>"; };
 		C35FB71028B60531000B1DCC /* DetailBookViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailBookViewModel.swift; sourceTree = "<group>"; };
 		C35FB71428B606FE000B1DCC /* SearchPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchPlaceholderView.swift; sourceTree = "<group>"; };
+		C3B10F3428D84EE000CAAA22 /* MainTabBarFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabBarFlow.swift; sourceTree = "<group>"; };
+		C3B10F3A28D8552900CAAA22 /* AppStepper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStepper.swift; sourceTree = "<group>"; };
+		C3B10F3F28D95C6500CAAA22 /* NewBooksFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewBooksFlow.swift; sourceTree = "<group>"; };
+		C3B10F4128D975C600CAAA22 /* SearchBooksFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBooksFlow.swift; sourceTree = "<group>"; };
 		C3BAF85B28C07FA700808822 /* Toast.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Toast.swift; sourceTree = "<group>"; };
 		C3E3E0ED28C97A1700763B04 /* UISearchBar+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UISearchBar+.swift"; sourceTree = "<group>"; };
 		D3A461D78C8855F8F6A08DF9 /* Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_OnboardingRxMVVM_OnboardingRxMVVMUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D5881E8C62CA09A1613D8170 /* Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests/Pods-OnboardingRxMVVM-OnboardingRxMVVMUITests.release.xcconfig"; sourceTree = "<group>"; };
 		EAD2B176E4116E54385E8821 /* Pods-OnboardingRxMVVMTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-OnboardingRxMVVMTests.release.xcconfig"; path = "Target Support Files/Pods-OnboardingRxMVVMTests/Pods-OnboardingRxMVVMTests.release.xcconfig"; sourceTree = "<group>"; };
+		FBE8055228D7017800BF9F92 /* AppStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStep.swift; sourceTree = "<group>"; };
+		FBE8055428D71C5E00BF9F92 /* AppFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -167,6 +179,7 @@
 		C3396B6328B7689D00A93662 /* Commons */ = {
 			isa = PBXGroup;
 			children = (
+				C38F0BFF28D4336100D9198B /* Coordinator */,
 				C3BAF85A28C07FA000808822 /* Toast */,
 				C35FB6E128B5E014000B1DCC /* Resources */,
 				C35FB6DE28B5AB8A000B1DCC /* Protocol */,
@@ -360,6 +373,75 @@
 				C35FB6F928B5F404000B1DCC /* UIViewController+.swift */,
 			);
 			path = "UIViewController+";
+			sourceTree = "<group>";
+		};
+		C38F0BFF28D4336100D9198B /* Coordinator */ = {
+			isa = PBXGroup;
+			children = (
+				C38F0C0228D4337800D9198B /* Step */,
+				C38F0C0128D4336E00D9198B /* Stepper */,
+				C38F0C0028D4336C00D9198B /* Flow */,
+			);
+			path = Coordinator;
+			sourceTree = "<group>";
+		};
+		C38F0C0028D4336C00D9198B /* Flow */ = {
+			isa = PBXGroup;
+			children = (
+				C3B10F3C28D958D600CAAA22 /* TabFlow */,
+				FBE8055428D71C5E00BF9F92 /* AppFlow.swift */,
+				C3B10F3428D84EE000CAAA22 /* MainTabBarFlow.swift */,
+			);
+			path = Flow;
+			sourceTree = "<group>";
+		};
+		C38F0C0128D4336E00D9198B /* Stepper */ = {
+			isa = PBXGroup;
+			children = (
+				C3B10F3A28D8552900CAAA22 /* AppStepper.swift */,
+			);
+			path = Stepper;
+			sourceTree = "<group>";
+		};
+		C38F0C0228D4337800D9198B /* Step */ = {
+			isa = PBXGroup;
+			children = (
+				FBE8055228D7017800BF9F92 /* AppStep.swift */,
+			);
+			path = Step;
+			sourceTree = "<group>";
+		};
+		C3B10F3C28D958D600CAAA22 /* TabFlow */ = {
+			isa = PBXGroup;
+			children = (
+				C3B10F4328D9766600CAAA22 /* TabBar */,
+				C3B10F3E28D958E200CAAA22 /* New */,
+				C3B10F3D28D958DD00CAAA22 /* Search */,
+			);
+			path = TabFlow;
+			sourceTree = "<group>";
+		};
+		C3B10F3D28D958DD00CAAA22 /* Search */ = {
+			isa = PBXGroup;
+			children = (
+				C3B10F4128D975C600CAAA22 /* SearchBooksFlow.swift */,
+			);
+			path = Search;
+			sourceTree = "<group>";
+		};
+		C3B10F3E28D958E200CAAA22 /* New */ = {
+			isa = PBXGroup;
+			children = (
+				C3B10F3F28D95C6500CAAA22 /* NewBooksFlow.swift */,
+			);
+			path = New;
+			sourceTree = "<group>";
+		};
+		C3B10F4328D9766600CAAA22 /* TabBar */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = TabBar;
 			sourceTree = "<group>";
 		};
 		C3BAF85A28C07FA000808822 /* Toast */ = {
@@ -625,6 +707,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3B10F4228D975C600CAAA22 /* SearchBooksFlow.swift in Sources */,
 				C35FB6F228B5EAA1000B1DCC /* NewBooksView.swift in Sources */,
 				C35FB71528B606FE000B1DCC /* SearchPlaceholderView.swift in Sources */,
 				C35FB70628B5FD6F000B1DCC /* SearchView.swift in Sources */,
@@ -634,11 +717,15 @@
 				C35FB6FA28B5F404000B1DCC /* UIViewController+.swift in Sources */,
 				C35FB6DD28B5AB33000B1DCC /* Book.swift in Sources */,
 				C35FB71328B60531000B1DCC /* DetailBookViewModel.swift in Sources */,
+				FBE8055328D7017800BF9F92 /* AppStep.swift in Sources */,
 				C35FB6FC28B5F508000B1DCC /* NewBooksCell.swift in Sources */,
 				C35FB70728B5FD6F000B1DCC /* SearchViewModel.swift in Sources */,
 				C35FB70128B5F87C000B1DCC /* UIView+.swift in Sources */,
+				FBE8055528D71C5E00BF9F92 /* AppFlow.swift in Sources */,
+				C3B10F4028D95C6500CAAA22 /* NewBooksFlow.swift in Sources */,
 				C35FB6F728B5ED7D000B1DCC /* UIBaseViewController.swift in Sources */,
 				C3396B6628B84F5B00A93662 /* ViewModelType.swift in Sources */,
+				C3B10F3B28D8552900CAAA22 /* AppStepper.swift in Sources */,
 				C35FB6DB28B5AADF000B1DCC /* APIService.swift in Sources */,
 				C35FB69628B4D654000B1DCC /* AppDelegate.swift in Sources */,
 				C35FB71128B60531000B1DCC /* DetailBookViewController.swift in Sources */,
@@ -653,6 +740,7 @@
 				C35FB6E628B5E113000B1DCC /* UIBaseView.swift in Sources */,
 				C35FB6D228B4D9CA000B1DCC /* NewBooksViewController.swift in Sources */,
 				C35FB6FE28B5F563000B1DCC /* UIBaseCollectionViewCell.swift in Sources */,
+				C3B10F3528D84EE000CAAA22 /* MainTabBarFlow.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
