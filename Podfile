@@ -10,6 +10,7 @@ target 'OnboardingRxMVVM' do
 	pod 'RxSwift', '~> 6.2.0'
 	pod 'RxCocoa'
 	pod 'Alamofire', '~> 5.5.0'
+	pod 'RxFlow', '~> 2.12.4'
 
 
   # Pods for OnboardingRxMVVM

@@ -49,7 +49,7 @@ class SearchView: UIBaseView {
         $0.addGestureRecognizer(tapGesture)
         $0.isHidden = true
     }
-    
+
     lazy var tapGesture = UITapGestureRecognizer()
 
     lazy var placeholderView = SearchPlaceholderView()
@@ -81,7 +81,7 @@ class SearchView: UIBaseView {
             .map { .searchQuery($0) }
             .bind(to: actionTriggers)
             .disposed(by: disposeBag)
-        
+
         // 컬렉션 셀 선택
         collectionView.rx.modelSelected(Book.self)
             .map { .selectedBook($0) }
@@ -113,7 +113,7 @@ class SearchView: UIBaseView {
         searchController.searchBar.rx.cancelButtonClicked
             .withUnretained(self)
             .subscribe(onNext: { owner, _ in
-                owner.actionTriggers.accept(.cancelled)
+            owner.actionTriggers.accept(.cancelled)
         }).disposed(by: disposeBag)
     }
 
@@ -124,8 +124,7 @@ class SearchView: UIBaseView {
         collectionView.delegate = nil
         collectionView.dataSource = nil
         collectionView.rx.setDelegate(self).disposed(by: disposeBag)
-
-        book.bind(to: collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
+        book.bind(to: self.collectionView.rx.items) { [weak self] collectionView, index, book -> UICollectionViewCell in
             guard let `self` = self else { return UICollectionViewCell() }
             if self.mode.value == .onboarding {
                 /// 온보딩 셀로 보여줌
@@ -143,6 +142,7 @@ class SearchView: UIBaseView {
             }
         }.disposed(by: disposeBag)
 
+
         return self
     }
 
@@ -151,14 +151,14 @@ class SearchView: UIBaseView {
         isEmptyBook
             .withUnretained(self)
             .bind(onNext: { owner, bool in
-                owner.fakeView.isHidden = bool
-                owner.collectionView.backgroundView = bool ? nil : owner.placeholderView
+            owner.fakeView.isHidden = bool
+            owner.collectionView.backgroundView = bool ? nil : owner.placeholderView // 책 리스트 없으면 false 있으면 true
         }).disposed(by: disposeBag)
 
         tapGesture.rx.event
             .withUnretained(self)
             .bind(onNext: { owner, _ in
-                owner.searchController.searchBar.endEditing(true)
+            owner.searchController.searchBar.endEditing(true)
         }).disposed(by: disposeBag)
 
         return self

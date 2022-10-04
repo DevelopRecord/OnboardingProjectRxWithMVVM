@@ -12,7 +12,7 @@ import Then
 import RxSwift
 import RxCocoa
 
-class DetailBookView: UIBaseView, UITextViewDelegate {
+class DetailBookView: UIBaseView {
 
     // MARK: - Model type implemente
 

@@ -9,6 +9,7 @@
 import UIKit
 import RxCocoa
 import RxSwift
+import RxFlow
 
 /// 액션 트리거 타입
 enum NewBooksTriggerType {
@@ -23,6 +24,8 @@ class NewBooksViewModel: ViewModelType {
     // MARK: - ViewModelType Protocol
 
     typealias ViewModel = NewBooksViewModel
+
+    var steps = PublishRelay<Step>()
 
     private var disposeBag: DisposeBag = DisposeBag()
     /// 책 리스트
@@ -48,7 +51,7 @@ class NewBooksViewModel: ViewModelType {
         req.viewDidLoaded
             .subscribe(onNext: fetchNewBooks)
             .disposed(by: disposeBag)
-
+        
         req.action
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)

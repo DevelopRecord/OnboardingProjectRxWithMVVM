@@ -38,7 +38,7 @@ class NewBooksViewController: UIBaseViewController {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
-
+print("NewBooksViewController")
         requestTrigger.accept(())
     }
     

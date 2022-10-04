@@ -36,7 +36,7 @@ class SearchViewController: UIBaseViewController {
         super.viewDidLoad()
         setupLayout()
         bindingViewModel()
-
+        print("SearchBooksViewController")
         requestTrigger.accept(())
     }
 

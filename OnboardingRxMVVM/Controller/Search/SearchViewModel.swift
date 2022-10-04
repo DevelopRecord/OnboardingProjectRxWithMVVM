@@ -82,12 +82,6 @@ class SearchViewModel: ViewModelType {
         req.action
             .subscribe(onNext: actionTriggerRequest)
             .disposed(by: disposeBag)
-
-        query
-            .withUnretained(self)
-            .subscribe(onNext: { owner, text in
-                owner.fetchSearchBooks(text, page: owner.page.value)
-        }).disposed(by: disposeBag)
         
         return Output(booksRelay: booksRelay.asObservable(),
                       isEmptyBookList: isEmptyBookList,
@@ -101,26 +95,34 @@ class SearchViewModel: ViewModelType {
         case .modeState(let state):
             if state == .onboarding {       // 온보딩 상태
                 fetchNewBooks()
+                isEmptyBookList.accept(booksRelay.value.isEmpty ? false : true)
             } else {                        // 검색 상태
-                booksRelay.accept([])
-                fetchSearchBooks(query.value, page: page.value)
+                query
+                    .withUnretained(self)
+                    .subscribe(onNext: { owner, text in
+                        owner.booksRelay.accept([])
+                        owner.fetchSearchBooks(text, page: owner.page.value)
+                }).disposed(by: disposeBag)
+                isEmptyBookList.accept(booksRelay.value.isEmpty ? false : true)
             }
             modeState.accept(state)
         case .isLoadMore(let state):
             let value = page.value
-            self.isLoadMore.accept(state)
+            isLoadMore.accept(state)
 
             if !query.value.isEmpty && booksRelay.value.count != 0 {
                 if isLoadMore.value {
                     if 1 <= page.value && page.value < endPage {
                         page.accept(value + 1)
                         fetchSearchBooks(query.value, page: page.value)
+                        isEmptyBookList.accept(booksRelay.value.isEmpty ? false : true)
                     }
                 }
             }
         case .cancelled:
             query.accept("")
             resetProperties()
+            self.isEmptyBookList.accept(true)
         case .selectedBook(let book):
             outputRequest.accept(.pushSelectedBook(book.isbn13))
         case .presentSafari(let str):
@@ -147,6 +149,7 @@ extension SearchViewModel {
             case .success(let response):
                 if let books = response.books {
                     self.booksRelay.accept(books)
+                    self.isEmptyBookList.accept(books.isEmpty ? false : true)
                 }
             case .failure(_):
                 Toast.shared.showToast(R.SearchViewTextMessage.failListMessage)
@@ -162,12 +165,7 @@ extension SearchViewModel {
             switch state {
             case .success(let response):
                 if let book = response.books {
-                    if book.isEmpty {                       // 책 리스트가 없을 때
-                        self.isEmptyBookList.accept(false)
-                    } else {                                // 책 리스트가 있을 때
-                        self.isEmptyBookList.accept(true)
-                    }
-                    
+                    self.isEmptyBookList.accept(book.isEmpty ? false : true)
                     /// 책 리스트 개수
                     guard let total = response.total else { return }
                     /// 마지막 페이지
